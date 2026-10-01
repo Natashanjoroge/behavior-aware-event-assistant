@@ -5,7 +5,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 auth_bp = Blueprint("auth", __name__)
 
-
 def get_db_connection():
     return psycopg.connect(
         host=os.getenv("DB_HOST"),

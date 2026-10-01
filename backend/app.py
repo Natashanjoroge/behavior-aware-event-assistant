@@ -3,14 +3,34 @@ import psycopg
 from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
+from routes.events import events_bp
 from routes.auth import auth_bp
+from routes.preference import preferences_bp
+from routes.bookmarks import bookmarks_bp
+
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-app.register_blueprint(auth_bp, url_prefix="/api/auth")
+# Register route groups
+app.register_blueprint(
+    auth_bp,
+    url_prefix="/api/auth"
+)
 
+app.register_blueprint(
+    preferences_bp,
+    url_prefix="/api/preferences"
+)
+app.register_blueprint(
+    events_bp,
+    url_prefix="/api/events"
+)
+app.register_blueprint(
+    bookmarks_bp,
+    url_prefix="/api/bookmarks"
+)
 def get_db_connection():
     return psycopg.connect(
         host=os.getenv("DB_HOST"),
