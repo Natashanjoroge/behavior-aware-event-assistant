@@ -6,6 +6,10 @@
   color: #1f2937;
 }
 
+/* =========================
+   SIDEBAR
+========================= */
+
 .student-sidebar {
   padding: 28px 18px;
   background: white;
@@ -17,23 +21,34 @@
 
 .student-nav {
   margin-top: 40px;
+
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .student-nav button {
-  border: none;
-  background: transparent;
+  width: 100%;
   padding: 13px 15px;
+
+  border: none;
   border-radius: 12px;
+
+  background: transparent;
+  color: #565d6d;
 
   text-align: left;
   font-weight: 600;
-  color: #565d6d;
+
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-.student-nav button:hover,
+.student-nav button:hover {
+  background: #f7f5ff;
+  color: #6c63ff;
+}
+
 .student-nav button.active {
   background: #eeeaff;
   color: #6c63ff;
@@ -42,6 +57,7 @@
 .interest-note {
   margin-top: auto;
   padding: 18px;
+
   border-radius: 16px;
 
   background: linear-gradient(
@@ -50,51 +66,76 @@
     #fff2ea
   );
 
+  color: #5145a7;
+
   font-size: 13px;
   line-height: 1.5;
-  color: #5145a7;
 }
+
+/* =========================
+   MAIN CONTENT
+========================= */
 
 .student-main {
   padding: 30px 36px;
 }
 
+/* =========================
+   HEADER
+========================= */
+
 .student-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   gap: 30px;
 }
 
 .student-header h1 {
   margin: 0;
+
   font-size: 28px;
   color: #1d2540;
 }
 
 .student-header p {
   margin: 5px 0 0;
+
   color: #7f8492;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
+
   gap: 12px;
 }
 
 .header-actions input {
   width: 320px;
+
   padding: 13px 16px;
 
   border: 1px solid #e0e2ea;
   border-radius: 14px;
 
+  background: white;
+  color: #1f2937;
+
   outline: none;
+
+  transition: 0.2s;
+}
+
+.header-actions input::placeholder {
+  color: #9ca3af;
 }
 
 .header-actions input:focus {
   border-color: #8a7cff;
+
+  box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.08);
 }
 
 .notification-btn {
@@ -105,7 +146,10 @@
   border-radius: 50%;
 
   background: white;
+
   box-shadow: 0 4px 15px rgba(50, 45, 90, 0.08);
+
+  cursor: pointer;
 }
 
 .profile-circle {
@@ -113,21 +157,32 @@
   height: 44px;
 
   border-radius: 50%;
-  background: linear-gradient(135deg, #6c63ff, #14b8a6);
+
+  background: linear-gradient(
+    135deg,
+    #6c63ff,
+    #14b8a6
+  );
+
+  color: white;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  color: white;
   font-weight: 800;
 }
+
+/* =========================
+   INTEREST FILTERS
+========================= */
 
 .interest-row {
   margin: 28px 0;
 
   display: flex;
   flex-wrap: wrap;
+
   gap: 14px;
 }
 
@@ -135,15 +190,25 @@
   min-width: 74px;
 
   border: none;
+
   background: transparent;
+  color: #696f7e;
 
   display: flex;
   flex-direction: column;
   align-items: center;
+
   gap: 7px;
 
   font-size: 12px;
-  color: #696f7e;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.interest-row button:hover {
+  color: #6c63ff;
 }
 
 .interest-row button span {
@@ -151,6 +216,7 @@
   height: 46px;
 
   border-radius: 50%;
+
   background: #f3f0ff;
 
   display: flex;
@@ -158,6 +224,14 @@
   justify-content: center;
 
   font-size: 19px;
+
+  transition: 0.2s;
+}
+
+.interest-row button:hover span {
+  transform: translateY(-2px);
+
+  box-shadow: 0 5px 15px rgba(108, 99, 255, 0.12);
 }
 
 .interest-row button.active-interest span {
@@ -170,11 +244,21 @@
   color: white;
 }
 
+/* =========================
+   TOP DASHBOARD
+========================= */
+
 .dashboard-top-grid {
   display: grid;
+
   grid-template-columns: 1.4fr 1fr;
+
   gap: 22px;
 }
+
+/* =========================
+   FEATURED EVENT
+========================= */
 
 .featured-event {
   min-height: 310px;
@@ -198,10 +282,13 @@
     );
 
   color: white;
+
+  box-shadow: 0 10px 30px rgba(69, 57, 120, 0.12);
 }
 
 .featured-overlay {
   height: 100%;
+
   padding: 40px;
 
   display: flex;
@@ -218,16 +305,19 @@
 
 .featured-overlay h2 {
   margin: 10px 0;
+
   font-size: 38px;
 }
 
 .featured-overlay p {
-  max-width: 350px;
+  max-width: 420px;
+
   line-height: 1.6;
 }
 
 .featured-overlay button {
   margin-top: 15px;
+
   padding: 11px 18px;
 
   border: none;
@@ -237,10 +327,21 @@
   color: #252a3d;
 
   font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.featured-overlay button:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
 }
 
 .featured-date {
   position: absolute;
+
   top: 20px;
   right: 20px;
 
@@ -266,10 +367,15 @@
   font-size: 11px;
 }
 
+/* =========================
+   RECOMMENDED PANEL
+========================= */
+
 .recommended-panel {
   padding: 22px;
 
   background: white;
+
   border-radius: 22px;
 
   box-shadow: 0 8px 25px rgba(55, 50, 90, 0.06);
@@ -279,26 +385,35 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  gap: 18px;
 }
 
 .section-title h2 {
   margin: 0;
+
   font-size: 20px;
+
   color: #232942;
 }
 
 .section-title p {
   margin: 5px 0 0;
+
   font-size: 13px;
+
   color: #8a8e99;
 }
 
 .section-title button {
   border: none;
-  background: transparent;
 
+  background: transparent;
   color: #6c63ff;
+
   font-weight: 700;
+
+  cursor: pointer;
 }
 
 .recommended-item {
@@ -307,9 +422,12 @@
 
   display: flex;
   align-items: center;
+
   gap: 12px;
 
   border-radius: 14px;
+
+  transition: 0.2s;
 }
 
 .recommended-item:hover {
@@ -320,7 +438,10 @@
   width: 50px;
   height: 50px;
 
+  flex-shrink: 0;
+
   border-radius: 12px;
+
   background: #f3f0ff;
 
   display: flex;
@@ -332,26 +453,47 @@
 
 .recommended-info {
   flex: 1;
+
+  min-width: 0;
 }
 
 .recommended-info h3 {
   margin: 0;
+
   font-size: 14px;
+
+  color: #252a3d;
 }
 
 .recommended-info p {
   margin: 5px 0 0;
+
   font-size: 12px;
+
   color: #898e9c;
 }
 
 .heart-btn {
   border: none;
+
   background: transparent;
 
-  font-size: 22px;
   color: #ec4899;
+
+  font-size: 22px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
 }
+
+.heart-btn:hover {
+  transform: scale(1.15);
+}
+
+/* =========================
+   EVENTS SECTION
+========================= */
 
 .events-section {
   margin-top: 30px;
@@ -361,14 +503,21 @@
   margin-top: 18px;
 
   display: grid;
+
   grid-template-columns: repeat(4, 1fr);
+
   gap: 17px;
 }
+
+/* =========================
+   EVENT CARD
+========================= */
 
 .event-card {
   overflow: hidden;
 
   background: white;
+
   border-radius: 17px;
 
   box-shadow: 0 7px 22px rgba(70, 60, 100, 0.07);
@@ -378,6 +527,8 @@
 
 .event-card:hover {
   transform: translateY(-4px);
+
+  box-shadow: 0 12px 28px rgba(70, 60, 100, 0.1);
 }
 
 .event-image-placeholder {
@@ -402,17 +553,35 @@
 
 .event-image-placeholder button {
   position: absolute;
+
   top: 10px;
   right: 10px;
 
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
 
   border: none;
   border-radius: 50%;
 
   background: white;
+
   color: #ec4899;
+
+  font-size: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  box-shadow: 0 4px 12px rgba(40, 40, 70, 0.08);
+
+  transition: 0.2s;
+}
+
+.event-image-placeholder button:hover {
+  transform: scale(1.1);
 }
 
 .event-card-content {
@@ -420,22 +589,121 @@
 }
 
 .event-category {
-  font-size: 11px;
-  font-weight: 700;
+  display: inline-block;
+
+  padding: 4px 8px;
+
+  border-radius: 20px;
+
+  background: #f3f0ff;
 
   color: #6c63ff;
+
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .event-card-content h3 {
-  margin: 7px 0;
+  margin: 9px 0;
+
   font-size: 15px;
+
+  color: #252a3d;
 }
 
 .event-card-content p {
-  margin: 0;
+  margin: 5px 0 0;
+
   color: #8b8f9a;
+
   font-size: 12px;
 }
+
+/* =========================
+   EMPTY SAVED STATE
+========================= */
+
+.empty-saved-state {
+  margin-top: 35px;
+
+  padding: 60px 30px;
+
+  background: white;
+
+  border-radius: 22px;
+
+  text-align: center;
+
+  box-shadow: 0 8px 25px rgba(55, 50, 90, 0.06);
+}
+
+.empty-saved-icon {
+  width: 72px;
+  height: 72px;
+
+  margin: 0 auto 18px;
+
+  border-radius: 50%;
+
+  background: #f3f0ff;
+
+  color: #ec4899;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 34px;
+}
+
+.empty-saved-state h3 {
+  margin: 0;
+
+  font-size: 20px;
+
+  color: #232942;
+}
+
+.empty-saved-state p {
+  max-width: 400px;
+
+  margin: 10px auto 22px;
+
+  color: #868b98;
+
+  line-height: 1.6;
+}
+
+.empty-saved-state button {
+  padding: 12px 20px;
+
+  border: none;
+  border-radius: 11px;
+
+  background: linear-gradient(
+    90deg,
+    #5b5cf6,
+    #8b5cf6
+  );
+
+  color: white;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.empty-saved-state button:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 20px rgba(91, 92, 246, 0.2);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
 
 @media (max-width: 1100px) {
   .event-card-grid {
@@ -456,8 +724,13 @@
     display: none;
   }
 
+  .student-main {
+    padding: 25px;
+  }
+
   .student-header {
     align-items: flex-start;
+
     flex-direction: column;
   }
 
@@ -467,6 +740,10 @@
 
   .header-actions input {
     width: 100%;
+  }
+
+  .interest-row {
+    justify-content: flex-start;
   }
 }
 
@@ -485,5 +762,18 @@
 
   .featured-overlay h2 {
     font-size: 30px;
+  }
+
+  .student-header h1 {
+    font-size: 24px;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+  }
+
+  .notification-btn,
+  .profile-circle {
+    flex-shrink: 0;
   }
 }

@@ -7,6 +7,7 @@ from routes.events import events_bp
 from routes.auth import auth_bp
 from routes.preference import preferences_bp
 from routes.bookmarks import bookmarks_bp
+from routes.interactions import interactions_bp
 
 load_dotenv()
 
@@ -22,6 +23,10 @@ app.register_blueprint(
 app.register_blueprint(
     preferences_bp,
     url_prefix="/api/preferences"
+)
+app.register_blueprint(
+    interactions_bp,
+    url_prefix="/api/interactions"
 )
 app.register_blueprint(
     events_bp,

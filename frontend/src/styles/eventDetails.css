@@ -1,0 +1,171 @@
+.event-details-page {
+  min-height: 100vh;
+  padding: 40px;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(108, 99, 255, 0.12),
+      transparent 28%
+    ),
+    #fffaf7;
+}
+
+.event-back-button {
+  margin-bottom: 25px;
+
+  border: none;
+  background: transparent;
+
+  color: #6558f5;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.event-details-card {
+  max-width: 950px;
+
+  margin: 0 auto;
+
+  overflow: hidden;
+
+  background: white;
+
+  border-radius: 24px;
+
+  box-shadow:
+    0 15px 40px
+    rgba(60, 50, 100, 0.1);
+}
+
+.event-details-hero {
+  padding: 55px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #5b5cf6,
+      #8b5cf6,
+      #ec4899
+    );
+
+  color: white;
+}
+
+.event-details-category {
+  display: inline-block;
+
+  padding: 6px 12px;
+
+  border-radius: 20px;
+
+  background:
+    rgba(255, 255, 255, 0.2);
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.event-details-hero h1 {
+  margin: 18px 0 12px;
+
+  font-size: 42px;
+}
+
+.event-details-hero p {
+  max-width: 680px;
+
+  margin: 0;
+
+  line-height: 1.7;
+}
+
+.event-details-info {
+  padding: 35px 55px;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 25px;
+}
+
+.event-details-info div {
+  padding: 20px;
+
+  border-radius: 14px;
+
+  background: #faf9ff;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.event-details-info span {
+  color: #8a8e99;
+
+  font-size: 12px;
+}
+
+.event-details-info strong {
+  color: #252a3d;
+}
+
+.event-book-button {
+  width: calc(100% - 110px);
+
+  margin:
+    0 55px 45px;
+
+  padding: 15px;
+
+  border: none;
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #5b5cf6,
+      #8b5cf6
+    );
+
+  color: white;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+@media (max-width: 650px) {
+  .event-details-page {
+    padding: 20px;
+  }
+
+  .event-details-hero {
+    padding: 35px 25px;
+  }
+
+  .event-details-hero h1 {
+    font-size: 30px;
+  }
+
+  .event-details-info {
+    padding: 25px;
+
+    grid-template-columns: 1fr;
+  }
+
+  .event-book-button {
+    width: calc(100% - 50px);
+
+    margin:
+      0 25px 30px;
+  }
+}

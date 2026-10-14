@@ -9,6 +9,8 @@ function Login({ onSwitch, onLogin }) {
   });
 
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleChange = (e) => {
     setForm({
@@ -40,7 +42,10 @@ function Login({ onSwitch, onLogin }) {
         return;
       }
 
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem(
+        "user",
+        JSON.stringify(data.user)
+      );
 
       if (onLogin) {
         onLogin(data.user);
@@ -51,80 +56,115 @@ function Login({ onSwitch, onLogin }) {
   };
 
   return (
-    <div className="auth-page">
-      {/* LEFT SIDE */}
-      <section className="auth-visual">
-        <Logo light />
+    <div className="login-split-page">
 
-        <div className="visual-message">
-          <h3>Your next campus moment starts here.</h3>
+      {/* LEFT SIDE - LOGIN FORM */}
+      <section className="login-form-side">
+        <div className="login-form-container">
 
-          <p className="visual-description">
-  Discover events that match your interests, connect with your
-  campus community, and find experiences worth showing up for.
-</p>
-        </div>
-      </section>
+          <div className="login-brand">
+            <Logo />
+          </div>
 
-      {/* RIGHT SIDE */}
-      <section className="auth-form-section">
-        <div className="auth-card">
-          <Logo />
+          <div className="login-heading">
+            <h1>Welcome Back</h1>
 
-          <div className="auth-tabs">
-            <button
-              type="button"
-              className="active"
-            >
-              Login
-            </button>
-
-            <button
-              type="button"
-              onClick={onSwitch}
-            >
-              Create account
-            </button>
+            <p>
+              Log in to your Eventeye account
+            </p>
           </div>
 
           <form onSubmit={handleSubmit}>
             <label htmlFor="email">
-              Email address
+              Email
             </label>
 
-            <input
-              id="email"
-              type="email"
-              name="email"
-              placeholder="student@example.com"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
+            <div className="login-input-wrapper">
+              <span className="input-icon">
+                ✉
+              </span>
+
+              <input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="yourname@gmail.com"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
             <label htmlFor="password">
               Password
             </label>
 
-            <input
-              id="password"
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
+            <div className="login-input-wrapper password-wrapper">
+              <span className="input-icon">
+                🔒
+              </span>
 
-            <div className="forgot-password">
-              Forgot password?
+              <input
+                id="password"
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
+                name="password"
+                placeholder="Enter your password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+
+              <button
+                type="button"
+                className="show-password-btn"
+                onClick={() =>
+                  setShowPassword(!showPassword)
+                }
+                aria-label={
+                  showPassword
+                    ? "Hide password"
+                    : "Show password"
+                }
+              >
+                {showPassword ? "🙈" : "👁"}
+              </button>
+            </div>
+
+            <div className="login-options">
+              <label className="remember-option">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) =>
+                    setRememberMe(
+                      e.target.checked
+                    )
+                  }
+                />
+
+                <span>
+                  Remember me
+                </span>
+              </label>
+
+              <button
+                type="button"
+                className="forgot-link"
+              >
+                Forgot password?
+              </button>
             </div>
 
             <button
               type="submit"
-              className="auth-button"
+              className="login-main-button"
             >
-              Log in →
+              <span>Log In</span>
+              <span>→</span>
             </button>
           </form>
 
@@ -134,38 +174,121 @@ function Login({ onSwitch, onLogin }) {
             </div>
           )}
 
-          <div className="divider">
+          <div className="login-divider">
             <span></span>
-            <p>or</p>
+            <p>or continue with</p>
             <span></span>
           </div>
 
-          <button
-            type="button"
-            className="social-button"
-          >
-            Continue with Google
-          </button>
-
-          <button
-            type="button"
-            className="social-button"
-          >
-            Continue with Microsoft
-          </button>
-
-          <p className="switch-text">
-            New to Eventeye?{" "}
+          <div className="social-login-row">
             <button
               type="button"
-              className="link-button"
+              className="login-social-button"
+            >
+              <span className="google-letter">
+                G
+              </span>
+              Continue with Google
+            </button>
+
+            <button
+              type="button"
+              className="login-social-button"
+            >
+              <span className="microsoft-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+
+              Continue with Microsoft
+            </button>
+          </div>
+
+          <p className="login-switch-text">
+            Don&apos;t have an account?{" "}
+
+            <button
+              type="button"
+              className="login-signup-link"
               onClick={onSwitch}
             >
-              Create an account
+              Sign up
             </button>
           </p>
         </div>
       </section>
+
+      {/* RIGHT SIDE - KENYA HERO */}
+      <section className="login-hero-side">
+        <div className="login-hero-overlay"></div>
+
+        <div className="hero-content">
+          <div className="hero-main-message">
+            <h2>
+              More
+              <br />
+              Than Events.
+            </h2>
+
+            <div className="hero-accent"></div>
+
+            <p>
+              A stronger campus.
+              <br />
+              A brighter tomorrow.
+            </p>
+          </div>
+
+          <div className="hero-features">
+
+            <div className="hero-feature">
+              <div className="hero-feature-icon">
+                📅
+              </div>
+
+              <h3>Discover</h3>
+
+              <p>
+                Events that match
+                <br />
+                your interests.
+              </p>
+            </div>
+
+            <div className="hero-feature">
+              <div className="hero-feature-icon">
+                👥
+              </div>
+
+              <h3>Connect</h3>
+
+              <p>
+                Meet people.
+                <br />
+                Join communities.
+              </p>
+            </div>
+
+            <div className="hero-feature">
+              <div className="hero-feature-icon">
+                ✨
+              </div>
+
+              <h3>Belong</h3>
+
+              <p>
+                Be part of
+                <br />
+                campus life.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }

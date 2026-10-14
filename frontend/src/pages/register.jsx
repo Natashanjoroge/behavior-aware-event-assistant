@@ -12,6 +12,8 @@ function Register({ onSwitch }) {
   });
 
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     setForm({
@@ -53,51 +55,42 @@ function Register({ onSwitch }) {
         return;
       }
 
-      setMessage("Account created successfully. You can now log in.");
+      setMessage(
+        "Account created successfully. You can now log in."
+      );
     } catch {
       setMessage("Could not connect to the server");
     }
   };
 
   return (
-    <div className="auth-page">
-      {/* LEFT SIDE */}
-      <section className="auth-visual">
-        <Logo light />
+    <div className="register-page">
+      <div className="register-card">
+        <div className="register-logo">
+          <Logo />
+        </div>
 
-        <div className="visual-message">
-          <h3>Find your crowd. Find your moment.</h3>
+        <div className="register-heading">
+          <h1>Create your Eventeye account</h1>
 
-          <p className="visual-description">
-            Choose what interests you and let Eventeye help you discover
-            campus experiences that actually feel relevant.
+          <p>
+            Join a campus community built around events,
+            interests, and experiences.
           </p>
         </div>
-      </section>
 
-      {/* RIGHT SIDE */}
-      <section className="auth-form-section">
-        <div className="auth-card">
-          <Logo />
+        <form
+          className="register-form"
+          onSubmit={handleSubmit}
+        >
+          <label htmlFor="full_name">
+            Full Name
+          </label>
 
-          <div className="auth-tabs">
-            <button
-              type="button"
-              onClick={onSwitch}
-            >
-              Login
-            </button>
-
-            <button
-              type="button"
-              className="active"
-            >
-              Create account
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            <label htmlFor="full_name">Full name</label>
+          <div className="register-input-wrapper">
+            <span className="register-input-icon">
+              👤
+            </span>
 
             <input
               id="full_name"
@@ -108,24 +101,44 @@ function Register({ onSwitch }) {
               onChange={handleChange}
               required
             />
+          </div>
 
-            <label htmlFor="email">Email address</label>
+          <label htmlFor="email">
+            University Email
+          </label>
+
+          <div className="register-input-wrapper">
+            <span className="register-input-icon">
+              ✉
+            </span>
 
             <input
               id="email"
               type="email"
               name="email"
-              placeholder="student@example.com"
+              placeholder="yourname@university.edu"
               value={form.email}
               onChange={handleChange}
               required
             />
+          </div>
 
-            <label htmlFor="password">Password</label>
+          <label htmlFor="password">
+            Password
+          </label>
+
+          <div className="register-input-wrapper">
+            <span className="register-input-icon">
+              🔒
+            </span>
 
             <input
               id="password"
-              type="password"
+              type={
+                showPassword
+                  ? "text"
+                  : "password"
+              }
               name="password"
               placeholder="Create a password"
               value={form.password}
@@ -133,80 +146,182 @@ function Register({ onSwitch }) {
               required
             />
 
-            <label htmlFor="confirm_password">
-              Confirm password
-            </label>
+            <button
+              type="button"
+              className="register-password-toggle"
+              onClick={() =>
+                setShowPassword(!showPassword)
+              }
+              aria-label={
+                showPassword
+                  ? "Hide password"
+                  : "Show password"
+              }
+            >
+              {showPassword ? "🙈" : "👁"}
+            </button>
+          </div>
+
+          <label htmlFor="confirm_password">
+            Confirm Password
+          </label>
+
+          <div className="register-input-wrapper">
+            <span className="register-input-icon">
+              🔒
+            </span>
 
             <input
               id="confirm_password"
-              type="password"
+              type={
+                showConfirmPassword
+                  ? "text"
+                  : "password"
+              }
               name="confirm_password"
-              placeholder="Re-enter your password"
+              placeholder="Confirm your password"
               value={form.confirm_password}
               onChange={handleChange}
               required
             />
 
-            <label>I am joining as</label>
-
-            <div className="role-options">
-              <div className="role-option">
-                <input
-                  id="student"
-                  type="radio"
-                  name="user_type"
-                  value="student"
-                  checked={form.user_type === "student"}
-                  onChange={handleChange}
-                />
-
-                <label htmlFor="student">
-                  Student
-                </label>
-              </div>
-
-              <div className="role-option">
-                <input
-                  id="organizer"
-                  type="radio"
-                  name="user_type"
-                  value="organizer"
-                  checked={form.user_type === "organizer"}
-                  onChange={handleChange}
-                />
-
-                <label htmlFor="organizer">
-                  Event Organizer
-                </label>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="auth-button"
-            >
-              Create account →
-            </button>
-          </form>
-
-          {message && (
-            <div className="auth-message">
-              {message}
-            </div>
-          )}
-
-          <p className="switch-text">
-            Already have an account?{" "}
             <button
               type="button"
-              className="link-button"
-              onClick={onSwitch}
+              className="register-password-toggle"
+              onClick={() =>
+                setShowConfirmPassword(
+                  !showConfirmPassword
+                )
+              }
+              aria-label={
+                showConfirmPassword
+                  ? "Hide password"
+                  : "Show password"
+              }
             >
-              Log in
+              {showConfirmPassword
+                ? "🙈"
+                : "👁"}
             </button>
-          </p>
+          </div>
+
+          <label>
+            Account Type
+          </label>
+
+          <div className="register-role-options">
+            <div className="register-role-option">
+              <input
+                id="student"
+                type="radio"
+                name="user_type"
+                value="student"
+                checked={
+                  form.user_type === "student"
+                }
+                onChange={handleChange}
+              />
+
+              <label htmlFor="student">
+                <span className="role-icon">
+                  🎓
+                </span>
+
+                <span className="role-copy">
+                  <strong>Student</strong>
+                  <small>
+                    Join events and communities
+                  </small>
+                </span>
+              </label>
+            </div>
+
+            <div className="register-role-option">
+              <input
+                id="organizer"
+                type="radio"
+                name="user_type"
+                value="organizer"
+                checked={
+                  form.user_type ===
+                  "organizer"
+                }
+                onChange={handleChange}
+              />
+
+              <label htmlFor="organizer">
+                <span className="role-icon">
+                  👥
+                </span>
+
+                <span className="role-copy">
+                  <strong>Organizer</strong>
+                  <small>
+                    Create and manage events
+                  </small>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="register-main-button"
+          >
+            Create Account →
+          </button>
+        </form>
+
+        {message && (
+          <div className="auth-message">
+            {message}
+          </div>
+        )}
+
+        <div className="register-divider">
+          <span></span>
+          <p>or continue with</p>
+          <span></span>
         </div>
-      </section>
+
+        <div className="register-social-row">
+          <button
+            type="button"
+            className="register-social-button"
+          >
+            <span className="google-letter">
+              G
+            </span>
+            Continue with Google
+          </button>
+
+          <button
+            type="button"
+            className="register-social-button"
+          >
+            <span className="microsoft-icon">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+
+            Continue with Microsoft
+          </button>
+        </div>
+
+        <p className="register-login-text">
+          Already have an account?{" "}
+
+          <button
+            type="button"
+            className="register-login-link"
+            onClick={onSwitch}
+          >
+            Log in
+          </button>
+        </p>
+      </div>
     </div>
   );
 }
