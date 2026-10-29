@@ -71,7 +71,7 @@ function Register({ onSwitch }) {
         </div>
 
         <div className="register-heading">
-          <h1>Create your Eventeye account</h1>
+          <h1>Create your EventEye account</h1>
 
           <p>
             Join a campus community built around events,
@@ -257,7 +257,7 @@ function Register({ onSwitch }) {
                 <span className="role-copy">
                   <strong>Organizer</strong>
                   <small>
-                    Create and manage events
+                    Create and manage your events
                   </small>
                 </span>
               </label>

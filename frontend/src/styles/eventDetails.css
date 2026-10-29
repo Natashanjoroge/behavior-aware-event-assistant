@@ -121,7 +121,7 @@
   width: calc(100% - 110px);
 
   margin:
-    0 55px 45px;
+    0 55px 20px;
 
   padding: 15px;
 
@@ -141,7 +141,533 @@
   font-weight: 700;
 
   cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
+
+.event-book-button:hover {
+  transform: translateY(-1px);
+}
+
+.event-book-button:disabled {
+  opacity: 0.7;
+  cursor: default;
+  transform: none;
+}
+
+/* ============================= */
+/* BOOKING MESSAGE */
+/* ============================= */
+
+.event-booking-message {
+  margin: 0 55px 22px;
+
+  text-align: center;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #5d5769;
+}
+
+/* ============================= */
+/* TICKET SECTION */
+/* ============================= */
+
+.event-ticket-section {
+  width: 100%;
+
+  padding: 10px 55px 45px;
+}
+
+/* ============================= */
+/* DIGITAL TICKET */
+/* ============================= */
+
+.event-ticket-preview {
+  width: 100%;
+  max-width: 650px;
+
+  margin: 0 auto;
+
+  overflow: hidden;
+
+  position: relative;
+
+  background: #ffffff;
+
+  border: 1px solid #e9e5ef;
+
+  border-radius: 22px;
+
+  box-shadow:
+    0 18px 50px
+    rgba(39, 29, 70, 0.12);
+
+  color: #171421;
+}
+
+/* ============================= */
+/* TICKET BRAND HEADER */
+/* ============================= */
+
+.event-ticket-brand {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  gap: 20px;
+
+  padding: 24px 28px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f3f0ff,
+      #faf8ff
+    );
+
+  border-bottom: 1px solid #ebe6f3;
+}
+
+.event-ticket-brand > div {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.event-ticket-brand-name {
+  display: block;
+
+  font-size: 23px;
+
+  font-weight: 800;
+
+  color: #5f4dee;
+
+  letter-spacing: -0.5px;
+}
+
+.event-ticket-brand-subtitle {
+  display: block;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  color: #7c7588;
+
+  text-transform: uppercase;
+
+  letter-spacing: 1.4px;
+}
+
+.event-ticket-admit {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 8px 13px;
+
+  border-radius: 999px;
+
+  border: 1px solid #dcd4ef;
+
+  background: #ffffff;
+
+  color: #5f4dee;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  letter-spacing: 1px;
+
+  white-space: nowrap;
+}
+
+/* ============================= */
+/* EVENT CONTENT */
+/* ============================= */
+
+.event-ticket-event {
+  padding: 28px 28px 18px;
+}
+
+.event-ticket-category {
+  display: inline-block;
+
+  margin-bottom: 14px;
+
+  padding: 6px 11px;
+
+  border-radius: 999px;
+
+  background: #eeeaff;
+
+  color: #604cdf;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+.event-ticket-event h2 {
+  margin: 0 0 12px;
+
+  font-size: 30px;
+
+  line-height: 1.15;
+
+  letter-spacing: -0.7px;
+
+  color: #18151f;
+}
+
+.event-ticket-event p {
+  margin: 0;
+
+  max-width: 540px;
+
+  font-size: 14px;
+
+  line-height: 1.65;
+
+  color: #6b6573;
+}
+
+/* ============================= */
+/* EVENT DETAILS GRID */
+/* ============================= */
+
+.event-ticket-details {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 22px 30px;
+
+  padding: 14px 28px 30px;
+}
+
+.event-ticket-details > div {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+
+  min-width: 0;
+}
+
+.event-ticket-details span {
+  display: block;
+
+  color: #938c9c;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 1.2px;
+}
+
+.event-ticket-details strong {
+  display: block;
+
+  color: #211d27;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  line-height: 1.45;
+
+  word-break: break-word;
+}
+
+/* ============================= */
+/* PERFORATION */
+/* ============================= */
+
+.event-ticket-divider {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  width: 100%;
+}
+
+.event-ticket-divider span {
+  display: block;
+
+  width: calc(100% - 56px);
+
+  margin: 0 auto;
+
+  border-top:
+    1px dashed #cec7da;
+}
+
+.event-ticket-divider::before,
+.event-ticket-divider::after {
+  content: "";
+
+  position: absolute;
+
+  top: 50%;
+
+  width: 26px;
+
+  height: 26px;
+
+  border-radius: 50%;
+
+  background: #fffaf7;
+
+  transform: translateY(-50%);
+}
+
+.event-ticket-divider::before {
+  left: -13px;
+}
+
+.event-ticket-divider::after {
+  right: -13px;
+}
+
+/* ============================= */
+/* QR SECTION */
+/* ============================= */
+
+.event-ticket-bottom {
+  display: grid;
+
+  grid-template-columns:
+    auto 1fr;
+
+  align-items: center;
+
+  gap: 30px;
+
+  padding: 30px 28px;
+}
+
+.event-ticket-qr {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  padding: 12px;
+
+  background: #ffffff;
+
+  border: 1px solid #e8e4ef;
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 8px 20px
+    rgba(40, 32, 62, 0.06);
+}
+
+.event-ticket-qr canvas {
+  display: block;
+}
+
+/* ============================= */
+/* TICKET CODE AREA */
+/* ============================= */
+
+.event-ticket-code-area {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  gap: 8px;
+
+  min-width: 0;
+}
+
+.event-ticket-code-label {
+  display: block;
+
+  color: #9992a2;
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  letter-spacing: 1.5px;
+}
+
+.event-ticket-code {
+  display: block;
+
+  color: #1d1924;
+
+  font-size: 20px;
+
+  font-weight: 800;
+
+  letter-spacing: 1px;
+
+  line-height: 1.3;
+
+  word-break: break-word;
+}
+
+.event-ticket-checkin {
+  display: block;
+
+  margin-top: 3px;
+
+  max-width: 260px;
+
+  color: #756f7d;
+
+  font-size: 12px;
+
+  line-height: 1.55;
+}
+
+.event-ticket-status {
+  display: inline-flex;
+
+  align-items: center;
+
+  width: fit-content;
+
+  margin-top: 5px;
+
+  padding: 7px 11px;
+
+  border-radius: 999px;
+
+  background: #edf8f0;
+
+  color: #2f7b4c;
+
+  font-size: 11px;
+
+  font-weight: 800;
+}
+
+.event-ticket-status.active {
+  background: #edf8f0;
+
+  color: #2f7b4c;
+}
+
+/* ============================= */
+/* TICKET FOOTER */
+/* ============================= */
+
+.event-ticket-footer {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 20px;
+
+  padding: 16px 28px;
+
+  background: #faf9fc;
+
+  border-top: 1px solid #ede9f2;
+
+  color: #918b98;
+
+  font-size: 11px;
+}
+
+.event-ticket-footer span {
+  display: block;
+}
+
+/* ============================= */
+/* DOWNLOAD BUTTON */
+/* ============================= */
+
+.event-ticket-download-button {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 100%;
+
+  max-width: 650px;
+
+  margin: 16px auto 0;
+
+  padding: 15px 22px;
+
+  border: none;
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #5b5cf6,
+      #7c5cf5
+    );
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 10px 24px
+    rgba(91, 92, 246, 0.2);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.event-ticket-download-button:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 14px 30px
+    rgba(91, 92, 246, 0.26);
+}
+
+.event-ticket-download-button:active {
+  transform: translateY(0);
+}
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
 
 @media (max-width: 650px) {
   .event-details-page {
@@ -166,6 +692,84 @@
     width: calc(100% - 50px);
 
     margin:
-      0 25px 30px;
+      0 25px 18px;
+  }
+
+  .event-booking-message {
+    margin:
+      0 25px 20px;
+  }
+
+  .event-ticket-section {
+    padding:
+      8px 25px 30px;
+  }
+
+  .event-ticket-preview {
+    border-radius: 18px;
+  }
+
+  .event-ticket-brand {
+    padding: 20px;
+
+    gap: 14px;
+  }
+
+  .event-ticket-brand-name {
+    font-size: 20px;
+  }
+
+  .event-ticket-admit {
+    font-size: 9px;
+  }
+
+  .event-ticket-event {
+    padding:
+      24px 20px 18px;
+  }
+
+  .event-ticket-event h2 {
+    font-size: 25px;
+  }
+
+  .event-ticket-details {
+    grid-template-columns: 1fr;
+
+    padding:
+      12px 20px 26px;
+
+    gap: 18px;
+  }
+
+  .event-ticket-bottom {
+    grid-template-columns: 1fr;
+
+    justify-items: center;
+
+    gap: 20px;
+
+    padding:
+      26px 20px;
+  }
+
+  .event-ticket-code-area {
+    align-items: center;
+
+    text-align: center;
+  }
+
+  .event-ticket-checkin {
+    max-width: 230px;
+  }
+
+  .event-ticket-footer {
+    padding:
+      15px 20px;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+    text-align: center;
   }
 }

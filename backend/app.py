@@ -8,6 +8,8 @@ from routes.auth import auth_bp
 from routes.preference import preferences_bp
 from routes.bookmarks import bookmarks_bp
 from routes.interactions import interactions_bp
+from routes.bookings import bookings_bp
+from routes.tickets import tickets_bp
 
 load_dotenv()
 
@@ -19,10 +21,17 @@ app.register_blueprint(
     auth_bp,
     url_prefix="/api/auth"
 )
-
+app.register_blueprint(
+    tickets_bp,
+    url_prefix="/api/tickets"
+)
 app.register_blueprint(
     preferences_bp,
     url_prefix="/api/preferences"
+)
+app.register_blueprint(
+    bookings_bp,
+    url_prefix="/api/bookings"
 )
 app.register_blueprint(
     interactions_bp,

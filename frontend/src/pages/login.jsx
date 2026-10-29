@@ -101,7 +101,7 @@ function Login({ onSwitch, onLogin }) {
 
             <div className="login-input-wrapper password-wrapper">
               <span className="input-icon">
-                🔒
+                🔑
               </span>
 
               <input

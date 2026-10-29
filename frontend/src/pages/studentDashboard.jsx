@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import Logo from "../components/logo";
 import EventDetails from "./eventDetails";
+import MyEvents from "./myevents";
 import "../styles/studentDashboard.css";
 
 function StudentDashboard({ user }) {
   const [events, setEvents] = useState([]);
+  const [activeView, setActiveView] = useState("home");
   const [savedEventIds, setSavedEventIds] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState("home");
 
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [showEventDetails, setShowEventDetails] = useState(false);
@@ -63,16 +64,10 @@ function StudentDashboard({ user }) {
             data.map((bookmark) => bookmark.event_id)
           );
         } else {
-          console.error(
-            "Could not load bookmarks:",
-            data
-          );
+          console.error("Could not load bookmarks:", data);
         }
       } catch (error) {
-        console.error(
-          "Bookmark loading error:",
-          error
-        );
+        console.error("Bookmark loading error:", error);
       }
     };
 
@@ -86,19 +81,16 @@ function StudentDashboard({ user }) {
   const toggleBookmark = async (eventId) => {
     if (!user?.user_id) return;
 
-    const isSaved =
-      savedEventIds.includes(eventId);
+    const isSaved = savedEventIds.includes(eventId);
 
     try {
       const response = await fetch(
         "http://127.0.0.1:5000/api/bookmarks/",
         {
           method: isSaved ? "DELETE" : "POST",
-
           headers: {
             "Content-Type": "application/json",
           },
-
           body: JSON.stringify({
             user_id: user.user_id,
             event_id: eventId,
@@ -109,18 +101,13 @@ function StudentDashboard({ user }) {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error(
-          "Bookmark error:",
-          data
-        );
+        console.error("Bookmark error:", data);
         return;
       }
 
       if (isSaved) {
         setSavedEventIds((current) =>
-          current.filter(
-            (id) => id !== eventId
-          )
+          current.filter((id) => id !== eventId)
         );
       } else {
         setSavedEventIds((current) => [
@@ -129,10 +116,7 @@ function StudentDashboard({ user }) {
         ]);
       }
     } catch (error) {
-      console.error(
-        "Bookmark request failed:",
-        error
-      );
+      console.error("Bookmark request failed:", error);
     }
   };
 
@@ -162,29 +146,19 @@ function StudentDashboard({ user }) {
     "Faith",
   ];
 
-  const featuredEvent =
-    events.length > 0
-      ? events[0]
-      : null;
+  const featuredEvent = events.length > 0 ? events[0] : null;
 
-  const recommendedEvents =
-    events.slice(1, 4);
+  const recommendedEvents = events.slice(1, 4);
 
-  const savedEvents =
-    events.filter((event) =>
-      savedEventIds.includes(
-        event.event_id
-      )
-    );
+  const savedEvents = events.filter((event) =>
+    savedEventIds.includes(event.event_id)
+  );
 
   /* =========================
      EVENT DETAILS VIEW
   ========================= */
 
-  if (
-    showEventDetails &&
-    selectedEventId
-  ) {
+  if (showEventDetails && selectedEventId) {
     return (
       <EventDetails
         eventId={selectedEventId}
@@ -193,6 +167,19 @@ function StudentDashboard({ user }) {
           setShowEventDetails(false);
           setSelectedEventId(null);
         }}
+      />
+    );
+  }
+
+  /* =========================
+     MY EVENTS VIEW
+  ========================= */
+
+  if (activeView === "my-events") {
+    return (
+      <MyEvents
+        user={user}
+        onBack={() => setActiveView("home")}
       />
     );
   }
@@ -210,14 +197,8 @@ function StudentDashboard({ user }) {
 
         <nav className="student-nav">
           <button
-            className={
-              activeView === "home"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setActiveView("home")
-            }
+            className={activeView === "home" ? "active" : ""}
+            onClick={() => setActiveView("home")}
           >
             🏠 Home
           </button>
@@ -230,19 +211,18 @@ function StudentDashboard({ user }) {
             🔎 Explore
           </button>
 
-          <button>
+          <button
+            className={
+              activeView === "my-events" ? "active" : ""
+            }
+            onClick={() => setActiveView("my-events")}
+          >
             📅 My Events
           </button>
 
           <button
-            className={
-              activeView === "saved"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setActiveView("saved")
-            }
+            className={activeView === "saved" ? "active" : ""}
+            onClick={() => setActiveView("saved")}
           >
             ♥ Saved
           </button>
@@ -258,8 +238,7 @@ function StudentDashboard({ user }) {
 
         <div className="interest-note">
           <strong>
-            Your interests power better
-            recommendations ✨
+            Your interests power better recommendations ✨
           </strong>
         </div>
       </aside>
@@ -270,15 +249,11 @@ function StudentDashboard({ user }) {
         <header className="student-header">
           <div>
             <h1>
-              Hi{" "}
-              {user?.full_name ||
-                "Student"}{" "}
-              👋
+              Hi {user?.full_name || "Student"} 👋
             </h1>
 
             <p>
-              Here’s what’s happening
-              on campus today.
+              Here’s what’s happening on campus today.
             </p>
           </div>
 
@@ -293,9 +268,7 @@ function StudentDashboard({ user }) {
             </button>
 
             <div className="profile-circle">
-              {user?.full_name?.charAt(
-                0
-              ) || "S"}
+              {user?.full_name?.charAt(0) || "S"}
             </div>
           </div>
         </header>
@@ -307,37 +280,26 @@ function StudentDashboard({ user }) {
         {activeView === "home" && (
           <>
             <section className="interest-row">
-              {interests.map(
-                (interest, index) => (
-                  <button
-                    key={interest}
-                    className={
-                      index === 0
-                        ? "active-interest"
-                        : ""
-                    }
-                  >
-                    <span>
-                      {getInterestIcon(
-                        interest
-                      )}
-                    </span>
+              {interests.map((interest, index) => (
+                <button
+                  key={interest}
+                  className={
+                    index === 0 ? "active-interest" : ""
+                  }
+                >
+                  <span>
+                    {getInterestIcon(interest)}
+                  </span>
 
-                    {interest}
-                  </button>
-                )
-              )}
+                  {interest}
+                </button>
+              ))}
             </section>
 
             {loading ? (
-              <p>
-                Loading events...
-              </p>
+              <p>Loading events...</p>
             ) : events.length === 0 ? (
-              <p>
-                No upcoming events
-                available yet.
-              </p>
+              <p>No upcoming events available yet.</p>
             ) : (
               <>
                 {/* TOP SECTION */}
@@ -349,27 +311,19 @@ function StudentDashboard({ user }) {
                     <div className="featured-event">
                       <div className="featured-overlay">
                         <span className="featured-small">
-                          YOUR WEEKEND
-                          STARTS HERE
+                          YOUR WEEKEND STARTS HERE
                         </span>
 
                         <h2>
-                          {
-                            featuredEvent.event_name
-                          }
+                          {featuredEvent.event_name}
                         </h2>
 
                         <p>
-                          {
-                            featuredEvent.description
-                          }
+                          {featuredEvent.description}
                         </p>
 
                         <p>
-                          📍{" "}
-                          {
-                            featuredEvent.location
-                          }
+                          📍 {featuredEvent.location}
                         </p>
 
                         <button
@@ -386,15 +340,11 @@ function StudentDashboard({ user }) {
 
                       <div className="featured-date">
                         <strong>
-                          {getDay(
-                            featuredEvent.event_date
-                          )}
+                          {getDay(featuredEvent.event_date)}
                         </strong>
 
                         <span>
-                          {getMonth(
-                            featuredEvent.event_date
-                          )}
+                          {getMonth(featuredEvent.event_date)}
                         </span>
                       </div>
                     </div>
@@ -404,76 +354,54 @@ function StudentDashboard({ user }) {
 
                   <div className="recommended-panel">
                     <div className="section-title">
-                      <h2>
-                        Recommended for You
-                      </h2>
+                      <h2>Recommended for You</h2>
 
                       <button>
                         View All →
                       </button>
                     </div>
 
-                    {recommendedEvents.map(
-                      (event) => (
-                        <div
-                          className="recommended-item"
-                          key={
-                            event.event_id
-                          }
-                          onClick={() =>
-                            openEventDetails(
-                              event.event_id
-                            )
-                          }
-                          style={{
-                            cursor:
-                              "pointer",
+                    {recommendedEvents.map((event) => (
+                      <div
+                        className="recommended-item"
+                        key={event.event_id}
+                        onClick={() =>
+                          openEventDetails(event.event_id)
+                        }
+                        style={{ cursor: "pointer" }}
+                      >
+                        <div className="recommended-icon">
+                          {getCategoryIcon(
+                            event.category_name
+                          )}
+                        </div>
+
+                        <div className="recommended-info">
+                          <h3>{event.event_name}</h3>
+
+                          <p>
+                            {formatDate(event.event_date)}
+                            {" · "}
+                            {event.location}
+                          </p>
+                        </div>
+
+                        <button
+                          className="heart-btn"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleBookmark(event.event_id);
                           }}
                         >
-                          <div className="recommended-icon">
-                            {getCategoryIcon(
-                              event.category_name
-                            )}
-                          </div>
-
-                          <div className="recommended-info">
-                            <h3>
-                              {
-                                event.event_name
-                              }
-                            </h3>
-
-                            <p>
-                              {formatDate(
-                                event.event_date
-                              )}
-                              {" · "}
-                              {
-                                event.location
-                              }
-                            </p>
-                          </div>
-
-                          <button
-                            className="heart-btn"
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              toggleBookmark(
-                                event.event_id
-                              );
-                            }}
-                          >
-                            {savedEventIds.includes(
-                              event.event_id
-                            )
-                              ? "♥"
-                              : "♡"}
-                          </button>
-                        </div>
-                      )
-                    )}
+                          {savedEventIds.includes(
+                            event.event_id
+                          )
+                            ? "♥"
+                            : "♡"}
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </section>
 
@@ -482,37 +410,26 @@ function StudentDashboard({ user }) {
                 <section className="events-section">
                   <div className="section-title">
                     <div>
-                      <h2>
-                        Events for You
-                      </h2>
+                      <h2>Events for You</h2>
 
                       <p>
-                        Discover upcoming
-                        events across campus.
+                        Discover upcoming events across campus.
                       </p>
                     </div>
                   </div>
 
                   <div className="event-card-grid">
-                    {events.map(
-                      (event) => (
-                        <EventCard
-                          key={
-                            event.event_id
-                          }
-                          event={event}
-                          isSaved={savedEventIds.includes(
-                            event.event_id
-                          )}
-                          onBookmark={
-                            toggleBookmark
-                          }
-                          onOpen={
-                            openEventDetails
-                          }
-                        />
-                      )
-                    )}
+                    {events.map((event) => (
+                      <EventCard
+                        key={event.event_id}
+                        event={event}
+                        isSaved={savedEventIds.includes(
+                          event.event_id
+                        )}
+                        onBookmark={toggleBookmark}
+                        onOpen={openEventDetails}
+                      />
+                    ))}
                   </div>
                 </section>
               </>
@@ -528,69 +445,47 @@ function StudentDashboard({ user }) {
           <section className="events-section">
             <div className="section-title">
               <div>
-                <h2>
-                  Saved Events
-                </h2>
+                <h2>Saved Events</h2>
 
                 <p>
-                  Everything you’ve
-                  bookmarked in one place.
+                  Everything you’ve bookmarked in one place.
                 </p>
               </div>
             </div>
 
             {loading ? (
-              <p>
-                Loading saved events...
-              </p>
-            ) : savedEvents.length ===
-              0 ? (
+              <p>Loading saved events...</p>
+            ) : savedEvents.length === 0 ? (
               <div className="empty-saved-state">
                 <div className="empty-saved-icon">
                   ♡
                 </div>
 
-                <h3>
-                  No saved events yet
-                </h3>
+                <h3>No saved events yet</h3>
 
                 <p>
-                  Find something
-                  interesting and tap the
-                  heart to save it for
-                  later.
+                  Find something interesting and tap the heart
+                  to save it for later.
                 </p>
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setActiveView(
-                      "home"
-                    )
-                  }
+                  onClick={() => setActiveView("home")}
                 >
                   Explore Events
                 </button>
               </div>
             ) : (
               <div className="event-card-grid">
-                {savedEvents.map(
-                  (event) => (
-                    <EventCard
-                      key={
-                        event.event_id
-                      }
-                      event={event}
-                      isSaved={true}
-                      onBookmark={
-                        toggleBookmark
-                      }
-                      onOpen={
-                        openEventDetails
-                      }
-                    />
-                  )
-                )}
+                {savedEvents.map((event) => (
+                  <EventCard
+                    key={event.event_id}
+                    event={event}
+                    isSaved={true}
+                    onBookmark={toggleBookmark}
+                    onOpen={openEventDetails}
+                  />
+                ))}
               </div>
             )}
           </section>
@@ -613,28 +508,19 @@ function EventCard({
   return (
     <div
       className="event-card"
-      onClick={() =>
-        onOpen(event.event_id)
-      }
-      style={{
-        cursor: "pointer",
-      }}
+      onClick={() => onOpen(event.event_id)}
+      style={{ cursor: "pointer" }}
     >
       <div className="event-image-placeholder">
         <span>
-          {getCategoryIcon(
-            event.category_name
-          )}
+          {getCategoryIcon(event.category_name)}
         </span>
 
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-
-            onBookmark(
-              event.event_id
-            );
+            onBookmark(event.event_id);
           }}
         >
           {isSaved ? "♥" : "♡"}
@@ -646,15 +532,10 @@ function EventCard({
           {event.category_name}
         </span>
 
-        <h3>
-          {event.event_name}
-        </h3>
+        <h3>{event.event_name}</h3>
 
         <p>
-          📅{" "}
-          {formatDate(
-            event.event_date
-          )}
+          📅 {formatDate(event.event_date)}
         </p>
 
         <p>
@@ -672,9 +553,7 @@ function EventCard({
 function formatDate(date) {
   if (!date) return "";
 
-  return new Date(
-    date
-  ).toLocaleDateString(
+  return new Date(date).toLocaleDateString(
     "en-GB",
     {
       day: "numeric",
@@ -687,9 +566,7 @@ function formatDate(date) {
 function getDay(date) {
   if (!date) return "";
 
-  return new Date(
-    date
-  ).toLocaleDateString(
+  return new Date(date).toLocaleDateString(
     "en-GB",
     {
       day: "2-digit",
@@ -710,49 +587,24 @@ function getMonth(date) {
     .toUpperCase();
 }
 
-function getCategoryIcon(
-  category
-) {
+function getCategoryIcon(category) {
   const icons = {
-    "Social & Entertainment":
-      "🎉",
-
-    "Sports & Fitness":
-      "🏀",
-
-    "Academic & Educational":
-      "📚",
-
-    "Career & Professional":
-      "💼",
-
-    "Arts & Culture":
-      "🎨",
-
-    "Technology & Innovation":
-      "💻",
-
-    "Clubs & Societies":
-      "👥",
-
-    "Wellness & Lifestyle":
-      "🌿",
-
-    "Community & Volunteering":
-      "🤝",
-
-    "Faith & Spirituality":
-      "✨",
+    "Social & Entertainment": "🎉",
+    "Sports & Fitness": "🏀",
+    "Academic & Educational": "📚",
+    "Career & Professional": "💼",
+    "Arts & Culture": "🎨",
+    "Technology & Innovation": "💻",
+    "Clubs & Societies": "👥",
+    "Wellness & Lifestyle": "🌿",
+    "Community & Volunteering": "🤝",
+    "Faith & Spirituality": "✨",
   };
 
-  return (
-    icons[category] || "📅"
-  );
+  return icons[category] || "📅";
 }
 
-function getInterestIcon(
-  interest
-) {
+function getInterestIcon(interest) {
   const icons = {
     All: "✨",
     Social: "🎉",
@@ -766,9 +618,7 @@ function getInterestIcon(
     Faith: "⭐",
   };
 
-  return (
-    icons[interest] || "✨"
-  );
+  return icons[interest] || "✨";
 }
 
 export default StudentDashboard;
