@@ -1,0 +1,295 @@
+.create-event-page {
+  min-height: 100vh;
+  padding: 42px;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(108, 99, 255, 0.1),
+      transparent 30%
+    ),
+    #f7f5f2;
+
+  color: #211c27;
+}
+
+.create-event-back {
+  margin-bottom: 28px;
+
+  border: none;
+  background: transparent;
+
+  color: #6558f5;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.create-event-shell {
+  width: 100%;
+  max-width: 900px;
+
+  margin: 0 auto;
+
+  background: #ffffff;
+
+  border: 1px solid #ebe7ee;
+  border-radius: 24px;
+
+  box-shadow:
+    0 18px 45px
+    rgba(35, 28, 48, 0.08);
+
+  overflow: hidden;
+}
+
+/* HEADER */
+
+.create-event-header {
+  padding: 36px 40px 26px;
+
+  border-bottom: 1px solid #f0edf2;
+}
+
+.create-event-eyebrow {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #6c63ff;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 1.4px;
+}
+
+.create-event-header h1 {
+  margin: 0 0 10px;
+
+  font-size: 34px;
+
+  color: #211c27;
+}
+
+.create-event-header p {
+  margin: 0;
+
+  max-width: 650px;
+
+  color: #7e7784;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* FORM */
+
+.create-event-form {
+  padding: 32px 40px 40px;
+}
+
+.create-event-form-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 20px;
+}
+
+.create-event-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  margin-bottom: 20px;
+}
+
+.create-event-field.full-width {
+  width: 100%;
+}
+
+.create-event-field label {
+  color: #4e4855;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.create-event-field input,
+.create-event-field select,
+.create-event-field textarea {
+  width: 100%;
+
+  padding: 13px 14px;
+
+  border: 1px solid #ddd8e2;
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  color: #2b2530;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.create-event-field textarea {
+  resize: vertical;
+
+  min-height: 120px;
+}
+
+.create-event-field input:focus,
+.create-event-field select:focus,
+.create-event-field textarea:focus {
+  border-color: #6c63ff;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(108, 99, 255, 0.1);
+}
+
+.create-event-field input::placeholder,
+.create-event-field textarea::placeholder {
+  color: #aaa3af;
+}
+
+/* ORGANIZER DISPLAY */
+
+.create-event-organizer-display {
+  padding: 13px 14px;
+
+  border: 1px solid #e4dfea;
+  border-radius: 12px;
+
+  background: #f8f6fb;
+
+  color: #5d5763;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* MESSAGE */
+
+.create-event-message {
+  margin: 2px 0 20px;
+
+  padding: 12px 14px;
+
+  border-radius: 12px;
+
+  background: #f4f1ff;
+
+  color: #5f4dee;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ACTIONS */
+
+.create-event-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  gap: 12px;
+
+  margin-top: 10px;
+}
+
+.create-event-cancel,
+.create-event-submit {
+  min-width: 140px;
+
+  padding: 13px 18px;
+
+  border-radius: 12px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.create-event-cancel {
+  border: 1px solid #ddd8e2;
+
+  background: #ffffff;
+
+  color: #5f5964;
+}
+
+.create-event-submit {
+  border: none;
+
+  background: #211c27;
+
+  color: #ffffff;
+}
+
+.create-event-submit:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 18px
+    rgba(33, 28, 39, 0.16);
+}
+
+.create-event-submit:disabled {
+  opacity: 0.65;
+
+  cursor: default;
+
+  transform: none;
+
+  box-shadow: none;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 700px) {
+  .create-event-page {
+    padding: 22px;
+  }
+
+  .create-event-header {
+    padding: 28px 24px 22px;
+  }
+
+  .create-event-header h1 {
+    font-size: 29px;
+  }
+
+  .create-event-form {
+    padding: 26px 24px 30px;
+  }
+
+  .create-event-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .create-event-actions {
+    flex-direction: column-reverse;
+  }
+
+  .create-event-cancel,
+  .create-event-submit {
+    width: 100%;
+  }
+}

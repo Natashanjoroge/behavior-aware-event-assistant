@@ -3,6 +3,7 @@ import Login from "./pages/login";
 import Register from "./pages/register";
 import Onboarding from "./pages/onboarding";
 import StudentDashboard from "./pages/studentDashboard";
+import OrganizerDashboard from "./pages/organizerdashboard";
 
 function App() {
   const [page, setPage] = useState("login");
@@ -60,12 +61,7 @@ function App() {
 }
 
   if (page === "organizer-dashboard" && user) {
-    return (
-      <div style={{ padding: "40px" }}>
-        <h1>Organizer Dashboard</h1>
-        <p>Welcome, {user.full_name}</p>
-      </div>
-    );
+    return <OrganizerDashboard user={user} />;
   }
 
   return (
