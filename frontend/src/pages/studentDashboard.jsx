@@ -3,6 +3,7 @@ import Logo from "../components/logo";
 import EventDetails from "./eventDetails";
 import MyEvents from "./myEvents";
 import Interests from "./interests";
+import StudentProfile from "./studentProfile";
 import "../styles/studentDashboard.css";
 
 function StudentDashboard({ user }) {
@@ -652,8 +653,7 @@ function StudentDashboard({ user }) {
 
         <div className="interest-note">
           <strong>
-            Your interests power
-            better recommendations ✨
+            Fuel your feed with the things you love
           </strong>
         </div>
 
@@ -676,8 +676,7 @@ function StudentDashboard({ user }) {
             </h1>
 
             <p>
-              Find something worth
-              showing up for.
+              Tell us what you love, we’ll handle the rest.
             </p>
           </div>
 
@@ -1292,111 +1291,26 @@ function StudentDashboard({ user }) {
         )}
 
         {/* =========================
-            PROFILE PLACEHOLDER
+            PROFILE
         ========================= */}
 
         {activeView === "profile" && (
-          <section className="events-section">
-
-            <div className="section-title">
-              <div>
-                <h2>
-                  My Profile
-                </h2>
-
-                <p>
-                  Your Eventeye student
-                  account.
-                </p>
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "#ffffff",
-                border:
-                  "1px solid #e8e4ee",
-                borderRadius:
-                  "18px",
-                padding: "28px",
-                maxWidth: "620px",
-              }}
-            >
-              <div
-                style={{
-                  width: "72px",
-                  height: "72px",
-                  borderRadius:
-                    "50%",
-                  background:
-                    "#f0ecff",
-                  display: "flex",
-                  alignItems:
-                    "center",
-                  justifyContent:
-                    "center",
-                  fontSize: "28px",
-                  fontWeight: "800",
-                  color:
-                    "#6558f5",
-                  marginBottom:
-                    "18px",
-                }}
-              >
-                {user?.full_name?.charAt(
-                  0
-                ) || "S"}
-              </div>
-
-              <h3
-                style={{
-                  marginBottom:
-                    "8px",
-                }}
-              >
-                {user?.full_name ||
-                  "Student"}
-              </h3>
-
-              <p
-                style={{
-                  color: "#716b78",
-                  marginBottom:
-                    "8px",
-                }}
-              >
-                {user?.email ||
-                  "No email available"}
-              </p>
-
-              <p
-                style={{
-                  color: "#716b78",
-                }}
-              >
-                Student account
-              </p>
-
-              <p
-                style={{
-                  marginTop:
-                    "24px",
-                  color: "#8b8492",
-                  fontSize: "13px",
-                }}
-              >
-                Profile editing will be
-                added next.
-              </p>
-            </div>
-
-          </section>
+          <StudentProfile
+            user={user}
+            onBack={() =>
+              setActiveView("home")
+            }
+            onEditInterests={() =>
+              setActiveView("interests")
+            }
+          />
         )}
 
       </main>
     </div>
   );
 }
+
 
 /* =========================
    RECOMMENDED ITEM
@@ -1473,6 +1387,7 @@ function RecommendedItem({
     </div>
   );
 }
+
 
 /* =========================
    EVENT CARD
@@ -1558,6 +1473,7 @@ function EventCard({
   );
 }
 
+
 /* =========================
    HELPERS
 ========================= */
@@ -1577,6 +1493,7 @@ function formatDate(date) {
   );
 }
 
+
 function getDay(date) {
   if (!date) return "";
 
@@ -1590,6 +1507,7 @@ function getDay(date) {
   );
 }
 
+
 function getMonth(date) {
   if (!date) return "";
 
@@ -1602,6 +1520,7 @@ function getMonth(date) {
     )
     .toUpperCase();
 }
+
 
 function getCategoryIcon(
   category
@@ -1643,6 +1562,7 @@ function getCategoryIcon(
   );
 }
 
+
 function getInterestIcon(
   interest
 ) {
@@ -1664,5 +1584,6 @@ function getInterestIcon(
     icons[interest] || "✨"
   );
 }
+
 
 export default StudentDashboard;

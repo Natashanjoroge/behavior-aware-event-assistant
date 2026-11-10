@@ -295,19 +295,7 @@ function Register({ onSwitch }) {
             Continue with Google
           </button>
 
-          <button
-            type="button"
-            className="register-social-button"
-          >
-            <span className="microsoft-icon">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-            </span>
-
-            Continue with Microsoft
-          </button>
+       
         </div>
 
         <p className="register-login-text">

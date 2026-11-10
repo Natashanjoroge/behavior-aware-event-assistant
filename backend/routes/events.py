@@ -1,6 +1,8 @@
 from flask import Blueprint, jsonify, request
+from datetime import datetime
 import psycopg
 import os
+
 
 events_bp = Blueprint("events", __name__)
 
@@ -13,6 +15,33 @@ def get_db_connection():
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
     )
+
+
+# ==============================
+# DATE HELPERS
+# ==============================
+
+def parse_event_datetime(value):
+    if not value:
+        return None
+
+    try:
+        return datetime.fromisoformat(
+            value.replace("Z", "+00:00")
+        )
+    except (ValueError, TypeError):
+        return None
+
+
+def is_date_before_today(value):
+    parsed_date = parse_event_datetime(value)
+
+    if not parsed_date:
+        return False
+
+    today = datetime.now().date()
+
+    return parsed_date.date() < today
 
 
 # ==============================
@@ -56,8 +85,16 @@ def get_events():
                 "event_name": row[1],
                 "description": row[2],
                 "location": row[3],
-                "event_date": row[4].isoformat() if row[4] else None,
-                "end_date": row[5].isoformat() if row[5] else None,
+                "event_date": (
+                    row[4].isoformat()
+                    if row[4]
+                    else None
+                ),
+                "end_date": (
+                    row[5].isoformat()
+                    if row[5]
+                    else None
+                ),
                 "capacity": row[6],
                 "status": row[7],
                 "category_name": row[8],
@@ -77,7 +114,7 @@ def get_events():
 
 @events_bp.route("/", methods=["POST"])
 def create_event():
-    data = request.get_json()
+    data = request.get_json() or {}
 
     event_name = data.get("event_name")
     description = data.get("description")
@@ -87,6 +124,10 @@ def create_event():
     end_date = data.get("end_date")
     capacity = data.get("capacity")
     organizer_id = data.get("organizer_id")
+
+    # ==============================
+    # REQUIRED FIELDS
+    # ==============================
 
     if not event_name:
         return jsonify({
@@ -118,16 +159,112 @@ def create_event():
             "message": "Organizer ID is required."
         }), 400
 
+    # ==============================
+    # VALIDATE START DATE
+    # ==============================
+
+    parsed_event_date = parse_event_datetime(
+        event_date
+    )
+
+    if not parsed_event_date:
+        return jsonify({
+            "message": "The event start date is invalid."
+        }), 400
+
+    if is_date_before_today(
+        event_date
+    ):
+        return jsonify({
+            "message": (
+                "The event date cannot be "
+                "before today's date."
+            )
+        }), 400
+
+    # ==============================
+    # VALIDATE END DATE
+    # ==============================
+
+    parsed_end_date = None
+
+    if end_date:
+        parsed_end_date = (
+            parse_event_datetime(
+                end_date
+            )
+        )
+
+        if not parsed_end_date:
+            return jsonify({
+                "message": (
+                    "The event end date is invalid."
+                )
+            }), 400
+
+        if is_date_before_today(
+            end_date
+        ):
+            return jsonify({
+                "message": (
+                    "The event end date cannot "
+                    "be before today's date."
+                )
+            }), 400
+
+        if (
+            parsed_end_date <=
+            parsed_event_date
+        ):
+            return jsonify({
+                "message": (
+                    "The event end time must be "
+                    "after the start time."
+                )
+            }), 400
+
+    # ==============================
+    # VALIDATE CAPACITY
+    # ==============================
+
+    if capacity is not None:
+        try:
+            capacity = int(capacity)
+
+            if capacity < 1:
+                return jsonify({
+                    "message": (
+                        "Capacity must be at least 1."
+                    )
+                }), 400
+
+        except (
+            ValueError,
+            TypeError
+        ):
+            return jsonify({
+                "message": (
+                    "Capacity must be a valid number."
+                )
+            }), 400
+
     try:
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Confirm organizer exists
+        # ==============================
+        # CONFIRM ORGANIZER
+        # ==============================
+
         cur.execute("""
-            SELECT user_id, user_type
+            SELECT
+                user_id,
+                user_type
             FROM users
             WHERE user_id = %s;
-        """, (organizer_id,))
+        """, (
+            organizer_id,
+        ))
 
         organizer = cur.fetchone()
 
@@ -136,7 +273,9 @@ def create_event():
             conn.close()
 
             return jsonify({
-                "message": "Organizer account not found."
+                "message": (
+                    "Organizer account not found."
+                )
             }), 404
 
         if organizer[1] != "organizer":
@@ -144,15 +283,24 @@ def create_event():
             conn.close()
 
             return jsonify({
-                "message": "This account is not registered as an organizer."
+                "message": (
+                    "This account is not registered "
+                    "as an organizer."
+                )
             }), 400
 
-        # Confirm category exists
+        # ==============================
+        # CONFIRM CATEGORY
+        # ==============================
+
         cur.execute("""
-            SELECT category_id
+            SELECT
+                category_id
             FROM event_categories
             WHERE category_id = %s;
-        """, (category_id,))
+        """, (
+            category_id,
+        ))
 
         category = cur.fetchone()
 
@@ -161,10 +309,15 @@ def create_event():
             conn.close()
 
             return jsonify({
-                "message": "Event category not found."
+                "message": (
+                    "Event category not found."
+                )
             }), 404
 
-        # Create event
+        # ==============================
+        # CREATE EVENT
+        # ==============================
+
         cur.execute("""
             INSERT INTO events (
                 event_name,
@@ -190,17 +343,19 @@ def create_event():
             )
             RETURNING event_id;
         """, (
-            event_name,
-            description,
+            event_name.strip(),
+            description.strip(),
             category_id,
-            location,
-            event_date,
-            end_date,
+            location.strip(),
+            parsed_event_date,
+            parsed_end_date,
             capacity,
             organizer_id
         ))
 
-        event_id = cur.fetchone()[0]
+        event_id = (
+            cur.fetchone()[0]
+        )
 
         conn.commit()
 
@@ -208,7 +363,9 @@ def create_event():
         conn.close()
 
         return jsonify({
-            "message": "Event created successfully",
+            "message": (
+                "Event created successfully"
+            ),
             "event_id": event_id
         }), 201
 
@@ -222,8 +379,13 @@ def create_event():
 # GET ALL EVENTS FOR ONE ORGANIZER
 # ==============================
 
-@events_bp.route("/organizer/<int:organizer_id>", methods=["GET"])
-def get_organizer_events(organizer_id):
+@events_bp.route(
+    "/organizer/<int:organizer_id>",
+    methods=["GET"]
+)
+def get_organizer_events(
+    organizer_id
+):
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -244,7 +406,9 @@ def get_organizer_events(organizer_id):
                 ON e.category_id = ec.category_id
             WHERE e.organizer_id = %s
             ORDER BY e.event_date DESC;
-        """, (organizer_id,))
+        """, (
+            organizer_id,
+        ))
 
         rows = cur.fetchall()
 
@@ -259,8 +423,16 @@ def get_organizer_events(organizer_id):
                 "event_name": row[1],
                 "description": row[2],
                 "location": row[3],
-                "event_date": row[4].isoformat() if row[4] else None,
-                "end_date": row[5].isoformat() if row[5] else None,
+                "event_date": (
+                    row[4].isoformat()
+                    if row[4]
+                    else None
+                ),
+                "end_date": (
+                    row[5].isoformat()
+                    if row[5]
+                    else None
+                ),
                 "capacity": row[6],
                 "status": row[7],
                 "category_name": row[8],
@@ -278,7 +450,10 @@ def get_organizer_events(organizer_id):
 # GET SINGLE EVENT
 # ==============================
 
-@events_bp.route("/<int:event_id>", methods=["GET"])
+@events_bp.route(
+    "/<int:event_id>",
+    methods=["GET"]
+)
 def get_event(event_id):
     try:
         conn = get_db_connection()
@@ -302,7 +477,9 @@ def get_event(event_id):
             LEFT JOIN users u
                 ON e.organizer_id = u.user_id
             WHERE e.event_id = %s;
-        """, (event_id,))
+        """, (
+            event_id,
+        ))
 
         row = cur.fetchone()
 
@@ -311,7 +488,9 @@ def get_event(event_id):
 
         if not row:
             return jsonify({
-                "message": "Event not found"
+                "message": (
+                    "Event not found"
+                )
             }), 404
 
         return jsonify({
@@ -319,8 +498,16 @@ def get_event(event_id):
             "event_name": row[1],
             "description": row[2],
             "location": row[3],
-            "event_date": row[4].isoformat() if row[4] else None,
-            "end_date": row[5].isoformat() if row[5] else None,
+            "event_date": (
+                row[4].isoformat()
+                if row[4]
+                else None
+            ),
+            "end_date": (
+                row[5].isoformat()
+                if row[5]
+                else None
+            ),
             "capacity": row[6],
             "status": row[7],
             "category_name": row[8],
