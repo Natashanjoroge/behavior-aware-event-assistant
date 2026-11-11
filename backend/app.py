@@ -13,6 +13,7 @@ from routes.bookings import bookings_bp
 from routes.tickets import tickets_bp
 from routes.recommendations import recommendations_bp
 from routes.profile import profile_bp
+from routes.mpesa import mpesa_bp
 
 load_dotenv()
 
@@ -33,10 +34,12 @@ app.register_blueprint(
     preferences_bp,
     url_prefix="/api/preferences"
 )
+
 app.register_blueprint(
     profile_bp,
     url_prefix="/api/profile"
 )
+
 app.register_blueprint(
     events_bp,
     url_prefix="/api/events"
@@ -65,6 +68,11 @@ app.register_blueprint(
 app.register_blueprint(
     recommendations_bp,
     url_prefix="/api/recommendations"
+)
+
+app.register_blueprint(
+    mpesa_bp,
+    url_prefix="/api/mpesa"
 )
 
 

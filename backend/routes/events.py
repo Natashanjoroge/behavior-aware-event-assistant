@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 import psycopg
 import os
 
@@ -39,15 +40,85 @@ def is_date_before_today(value):
     if not parsed_date:
         return False
 
-    return parsed_date.date() < datetime.now().date()
+    return (
+        parsed_date.date()
+        < datetime.now().date()
+    )
+
+
+# ==============================
+# PAYMENT HELPERS
+# ==============================
+
+def parse_is_paid(value):
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, str):
+        return value.strip().lower() in (
+            "true",
+            "1",
+            "yes",
+            "paid",
+        )
+
+    if isinstance(value, int):
+        return value == 1
+
+    return False
+
+
+def parse_ticket_price(
+    value,
+    is_paid
+):
+    if not is_paid:
+        return Decimal("0.00"), None
+
+    if value is None or value == "":
+        return None, (
+            "Ticket price is required "
+            "for paid events."
+        )
+
+    try:
+        ticket_price = Decimal(
+            str(value)
+        ).quantize(
+            Decimal("0.01")
+        )
+
+    except (
+        InvalidOperation,
+        ValueError,
+        TypeError
+    ):
+        return None, (
+            "Ticket price must be "
+            "a valid number."
+        )
+
+    if ticket_price <= 0:
+        return None, (
+            "Ticket price must be "
+            "greater than 0."
+        )
+
+    return ticket_price, None
 
 
 # ==============================
 # GET ALL EVENTS
 # ==============================
 
-@events_bp.route("/", methods=["GET"])
+@events_bp.route(
+    "/",
+    methods=["GET"]
+)
 def get_events():
+    conn = None
+    cur = None
+
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -62,104 +133,203 @@ def get_events():
                 e.end_date,
                 e.capacity,
                 e.status,
-                ec.category_name
+                ec.category_name,
+                e.category_id,
+                e.organizer_id,
+                e.is_paid,
+                e.ticket_price
             FROM events e
+
             LEFT JOIN event_categories ec
-                ON e.category_id = ec.category_id
+                ON e.category_id =
+                   ec.category_id
+
             WHERE e.status != 'cancelled'
-            ORDER BY e.event_date ASC;
+
+            ORDER BY
+                e.event_date ASC;
         """)
 
         rows = cur.fetchall()
-
-        cur.close()
-        conn.close()
 
         events = []
 
         for row in rows:
             events.append({
-                "event_id": row[0],
-                "event_name": row[1],
-                "description": row[2],
-                "location": row[3],
+                "event_id":
+                    row[0],
+
+                "event_name":
+                    row[1],
+
+                "description":
+                    row[2],
+
+                "location":
+                    row[3],
+
                 "event_date": (
                     row[4].isoformat()
                     if row[4]
                     else None
                 ),
+
                 "end_date": (
                     row[5].isoformat()
                     if row[5]
                     else None
                 ),
-                "capacity": row[6],
-                "status": row[7],
-                "category_name": row[8],
+
+                "capacity":
+                    row[6],
+
+                "status":
+                    row[7],
+
+                "category_name":
+                    row[8],
+
+                "category_id":
+                    row[9],
+
+                "organizer_id":
+                    row[10],
+
+                "is_paid":
+                    bool(row[11]),
+
+                "ticket_price": (
+                    float(row[12])
+                    if row[12] is not None
+                    else 0.0
+                ),
             })
 
-        return jsonify(events)
+        return jsonify(events), 200
 
     except Exception as e:
         return jsonify({
             "message": str(e)
         }), 500
 
+    finally:
+        if cur:
+            cur.close()
+
+        if conn:
+            conn.close()
+
 
 # ==============================
 # CREATE EVENT
 # ==============================
 
-@events_bp.route("/", methods=["POST"])
+@events_bp.route(
+    "/",
+    methods=["POST"]
+)
 def create_event():
     data = request.get_json() or {}
 
-    event_name = data.get("event_name")
-    description = data.get("description")
-    category_id = data.get("category_id")
-    location = data.get("location")
-    event_date = data.get("event_date")
-    end_date = data.get("end_date")
-    capacity = data.get("capacity")
-    organizer_id = data.get("organizer_id")
+    event_name = data.get(
+        "event_name"
+    )
+
+    description = data.get(
+        "description"
+    )
+
+    category_id = data.get(
+        "category_id"
+    )
+
+    location = data.get(
+        "location"
+    )
+
+    event_date = data.get(
+        "event_date"
+    )
+
+    end_date = data.get(
+        "end_date"
+    )
+
+    capacity = data.get(
+        "capacity"
+    )
+
+    organizer_id = data.get(
+        "organizer_id"
+    )
+
+    is_paid = parse_is_paid(
+        data.get(
+            "is_paid",
+            False
+        )
+    )
+
+    ticket_price, price_error = (
+        parse_ticket_price(
+            data.get(
+                "ticket_price"
+            ),
+            is_paid
+        )
+    )
 
     if not event_name:
         return jsonify({
-            "message": "Event name is required."
+            "message":
+                "Event name is required."
         }), 400
 
     if not description:
         return jsonify({
-            "message": "Description is required."
+            "message":
+                "Description is required."
         }), 400
 
     if not category_id:
         return jsonify({
-            "message": "Event category is required."
+            "message":
+                "Event category is required."
         }), 400
 
     if not location:
         return jsonify({
-            "message": "Location is required."
+            "message":
+                "Location is required."
         }), 400
 
     if not event_date:
         return jsonify({
-            "message": "Event date is required."
+            "message":
+                "Event date is required."
         }), 400
 
     if not organizer_id:
         return jsonify({
-            "message": "Organizer ID is required."
+            "message":
+                "Organizer ID is required."
         }), 400
 
-    parsed_event_date = parse_event_datetime(
-        event_date
+    if price_error:
+        return jsonify({
+            "message": price_error
+        }), 400
+
+    parsed_event_date = (
+        parse_event_datetime(
+            event_date
+        )
     )
 
     if not parsed_event_date:
         return jsonify({
-            "message": "The event start date is invalid."
+            "message":
+                "The event start date is invalid."
         }), 400
 
     if is_date_before_today(
@@ -175,13 +345,18 @@ def create_event():
     parsed_end_date = None
 
     if end_date:
-        parsed_end_date = parse_event_datetime(
-            end_date
+        parsed_end_date = (
+            parse_event_datetime(
+                end_date
+            )
         )
 
         if not parsed_end_date:
             return jsonify({
-                "message": "The event end date is invalid."
+                "message": (
+                    "The event end date "
+                    "is invalid."
+                )
             }), 400
 
         if is_date_before_today(
@@ -189,30 +364,34 @@ def create_event():
         ):
             return jsonify({
                 "message": (
-                    "The event end date cannot be "
-                    "before today's date."
+                    "The event end date "
+                    "cannot be before "
+                    "today's date."
                 )
             }), 400
 
         if (
-            parsed_end_date <=
-            parsed_event_date
+            parsed_end_date
+            <= parsed_event_date
         ):
             return jsonify({
                 "message": (
-                    "The event end time must be "
-                    "after the start time."
+                    "The event end time must "
+                    "be after the start time."
                 )
             }), 400
 
     if capacity is not None:
         try:
-            capacity = int(capacity)
+            capacity = int(
+                capacity
+            )
 
             if capacity < 1:
                 return jsonify({
                     "message": (
-                        "Capacity must be at least 1."
+                        "Capacity must be "
+                        "at least 1."
                     )
                 }), 400
 
@@ -222,15 +401,22 @@ def create_event():
         ):
             return jsonify({
                 "message": (
-                    "Capacity must be a valid number."
+                    "Capacity must be "
+                    "a valid number."
                 )
             }), 400
+
+    conn = None
+    cur = None
 
     try:
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Confirm organizer exists
+        # ==============================
+        # CONFIRM ORGANIZER
+        # ==============================
+
         cur.execute("""
             SELECT
                 user_id,
@@ -244,25 +430,23 @@ def create_event():
         organizer = cur.fetchone()
 
         if not organizer:
-            cur.close()
-            conn.close()
-
             return jsonify({
-                "message": "Organizer account not found."
+                "message":
+                    "Organizer account not found."
             }), 404
 
         if organizer[1] != "organizer":
-            cur.close()
-            conn.close()
-
             return jsonify({
                 "message": (
-                    "This account is not registered "
-                    "as an organizer."
+                    "This account is not "
+                    "registered as an organizer."
                 )
             }), 400
 
-        # Confirm category
+        # ==============================
+        # CONFIRM CATEGORY
+        # ==============================
+
         cur.execute("""
             SELECT category_id
             FROM event_categories
@@ -274,14 +458,15 @@ def create_event():
         category = cur.fetchone()
 
         if not category:
-            cur.close()
-            conn.close()
-
             return jsonify({
-                "message": "Event category not found."
+                "message":
+                    "Event category not found."
             }), 404
 
-        # Create event
+        # ==============================
+        # CREATE EVENT
+        # ==============================
+
         cur.execute("""
             INSERT INTO events (
                 event_name,
@@ -292,7 +477,9 @@ def create_event():
                 end_date,
                 capacity,
                 status,
-                organizer_id
+                organizer_id,
+                is_paid,
+                ticket_price
             )
             VALUES (
                 %s,
@@ -303,6 +490,8 @@ def create_event():
                 %s,
                 %s,
                 'upcoming',
+                %s,
+                %s,
                 %s
             )
             RETURNING event_id;
@@ -314,25 +503,45 @@ def create_event():
             parsed_event_date,
             parsed_end_date,
             capacity,
-            organizer_id
+            organizer_id,
+            is_paid,
+            ticket_price,
         ))
 
-        event_id = cur.fetchone()[0]
+        event_id = (
+            cur.fetchone()[0]
+        )
 
         conn.commit()
 
-        cur.close()
-        conn.close()
-
         return jsonify({
-            "message": "Event created successfully",
-            "event_id": event_id
+            "message":
+                "Event created successfully",
+
+            "event_id":
+                event_id,
+
+            "is_paid":
+                is_paid,
+
+            "ticket_price":
+                float(ticket_price),
         }), 201
 
     except Exception as e:
+        if conn:
+            conn.rollback()
+
         return jsonify({
             "message": str(e)
         }), 500
+
+    finally:
+        if cur:
+            cur.close()
+
+        if conn:
+            conn.close()
 
 
 # ==============================
@@ -346,6 +555,9 @@ def create_event():
 def get_organizer_events(
     organizer_id
 ):
+    conn = None
+    cur = None
+
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -360,50 +572,89 @@ def get_organizer_events(
                 e.end_date,
                 e.capacity,
                 e.status,
-                ec.category_name
+                ec.category_name,
+                e.category_id,
+                e.is_paid,
+                e.ticket_price
             FROM events e
+
             LEFT JOIN event_categories ec
-                ON e.category_id = ec.category_id
+                ON e.category_id =
+                   ec.category_id
+
             WHERE e.organizer_id = %s
-            ORDER BY e.event_date DESC;
+
+            ORDER BY
+                e.event_date DESC;
         """, (
             organizer_id,
         ))
 
         rows = cur.fetchall()
 
-        cur.close()
-        conn.close()
-
         events = []
 
         for row in rows:
             events.append({
-                "event_id": row[0],
-                "event_name": row[1],
-                "description": row[2],
-                "location": row[3],
+                "event_id":
+                    row[0],
+
+                "event_name":
+                    row[1],
+
+                "description":
+                    row[2],
+
+                "location":
+                    row[3],
+
                 "event_date": (
                     row[4].isoformat()
                     if row[4]
                     else None
                 ),
+
                 "end_date": (
                     row[5].isoformat()
                     if row[5]
                     else None
                 ),
-                "capacity": row[6],
-                "status": row[7],
-                "category_name": row[8],
+
+                "capacity":
+                    row[6],
+
+                "status":
+                    row[7],
+
+                "category_name":
+                    row[8],
+
+                "category_id":
+                    row[9],
+
+                "is_paid":
+                    bool(row[10]),
+
+                "ticket_price": (
+                    float(row[11])
+                    if row[11] is not None
+                    else 0.0
+                ),
             })
 
-        return jsonify(events)
+        return jsonify(events), 200
 
     except Exception as e:
         return jsonify({
             "message": str(e)
         }), 500
+
+    finally:
+        if cur:
+            cur.close()
+
+        if conn:
+            conn.close()
 
 
 # ==============================
@@ -417,6 +668,9 @@ def get_organizer_events(
 def get_organizer_analytics(
     organizer_id
 ):
+    conn = None
+    cur = None
+
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -439,20 +693,16 @@ def get_organizer_analytics(
         organizer = cur.fetchone()
 
         if not organizer:
-            cur.close()
-            conn.close()
-
             return jsonify({
-                "message": "Organizer not found."
+                "message":
+                    "Organizer not found."
             }), 404
 
         if organizer[2] != "organizer":
-            cur.close()
-            conn.close()
-
             return jsonify({
                 "message": (
-                    "This account is not an organizer."
+                    "This account is not "
+                    "an organizer."
                 )
             }), 400
 
@@ -468,16 +718,22 @@ def get_organizer_analytics(
                 e.status,
                 e.capacity,
                 ec.category_name,
+                e.is_paid,
+                e.ticket_price,
 
                 COALESCE(
                     (
                         SELECT COUNT(*)
                         FROM interactions i
-                        WHERE i.event_id = e.event_id
-                        AND i.interaction_type IN (
-                            'VIEW',
-                            'DETAIL_VIEW'
-                        )
+                        WHERE
+                            i.event_id =
+                            e.event_id
+                        AND
+                            i.interaction_type
+                            IN (
+                                'VIEW',
+                                'DETAIL_VIEW'
+                            )
                     ),
                     0
                 ) AS views,
@@ -486,7 +742,9 @@ def get_organizer_analytics(
                     (
                         SELECT COUNT(*)
                         FROM bookmarks bm
-                        WHERE bm.event_id = e.event_id
+                        WHERE
+                            bm.event_id =
+                            e.event_id
                     ),
                     0
                 ) AS bookmarks,
@@ -495,8 +753,12 @@ def get_organizer_analytics(
                     (
                         SELECT COUNT(*)
                         FROM bookings b
-                        WHERE b.event_id = e.event_id
-                        AND b.booking_status != 'cancelled'
+                        WHERE
+                            b.event_id =
+                            e.event_id
+                        AND
+                            b.booking_status
+                            != 'cancelled'
                     ),
                     0
                 ) AS bookings,
@@ -505,8 +767,12 @@ def get_organizer_analytics(
                     (
                         SELECT COUNT(*)
                         FROM bookings b2
-                        WHERE b2.event_id = e.event_id
-                        AND b2.booking_status = 'attended'
+                        WHERE
+                            b2.event_id =
+                            e.event_id
+                        AND
+                            b2.booking_status =
+                            'attended'
                     ),
                     0
                 ) AS attended
@@ -514,11 +780,13 @@ def get_organizer_analytics(
             FROM events e
 
             LEFT JOIN event_categories ec
-                ON e.category_id = ec.category_id
+                ON e.category_id =
+                   ec.category_id
 
             WHERE e.organizer_id = %s
 
-            ORDER BY e.event_date DESC;
+            ORDER BY
+                e.event_date DESC;
         """, (
             organizer_id,
         ))
@@ -533,14 +801,28 @@ def get_organizer_analytics(
         total_attended = 0
 
         for row in rows:
-            views = row[6] or 0
-            bookmarks = row[7] or 0
-            bookings = row[8] or 0
-            attended = row[9] or 0
+            views = (
+                row[8] or 0
+            )
+
+            bookmarks = (
+                row[9] or 0
+            )
+
+            bookings = (
+                row[10] or 0
+            )
+
+            attended = (
+                row[11] or 0
+            )
 
             conversion_rate = (
                 round(
-                    (bookings / views) * 100,
+                    (
+                        bookings /
+                        views
+                    ) * 100,
                     1
                 )
                 if views > 0
@@ -549,7 +831,10 @@ def get_organizer_analytics(
 
             bookmark_rate = (
                 round(
-                    (bookmarks / views) * 100,
+                    (
+                        bookmarks /
+                        views
+                    ) * 100,
                     1
                 )
                 if views > 0
@@ -558,7 +843,10 @@ def get_organizer_analytics(
 
             attendance_rate = (
                 round(
-                    (attended / bookings) * 100,
+                    (
+                        attended /
+                        bookings
+                    ) * 100,
                     1
                 )
                 if bookings > 0
@@ -567,10 +855,16 @@ def get_organizer_analytics(
 
             capacity_utilization = (
                 round(
-                    (bookings / row[4]) * 100,
+                    (
+                        bookings /
+                        row[4]
+                    ) * 100,
                     1
                 )
-                if row[4] and row[4] > 0
+                if (
+                    row[4]
+                    and row[4] > 0
+                )
                 else None
             )
 
@@ -580,8 +874,11 @@ def get_organizer_analytics(
             total_attended += attended
 
             event_analytics.append({
-                "event_id": row[0],
-                "event_name": row[1],
+                "event_id":
+                    row[0],
+
+                "event_name":
+                    row[1],
 
                 "event_date": (
                     row[2].isoformat()
@@ -589,14 +886,35 @@ def get_organizer_analytics(
                     else None
                 ),
 
-                "status": row[3],
-                "capacity": row[4],
-                "category_name": row[5],
+                "status":
+                    row[3],
 
-                "views": views,
-                "bookmarks": bookmarks,
-                "bookings": bookings,
-                "attended": attended,
+                "capacity":
+                    row[4],
+
+                "category_name":
+                    row[5],
+
+                "is_paid":
+                    bool(row[6]),
+
+                "ticket_price": (
+                    float(row[7])
+                    if row[7] is not None
+                    else 0.0
+                ),
+
+                "views":
+                    views,
+
+                "bookmarks":
+                    bookmarks,
+
+                "bookings":
+                    bookings,
+
+                "attended":
+                    attended,
 
                 "conversion_rate":
                     conversion_rate,
@@ -667,14 +985,24 @@ def get_organizer_analytics(
                     (
                         SELECT COUNT(*)
                         FROM interactions i
+
                         JOIN events ei
-                            ON i.event_id = ei.event_id
-                        WHERE ei.organizer_id = %s
-                        AND ei.category_id = ec.category_id
-                        AND i.interaction_type IN (
-                            'VIEW',
-                            'DETAIL_VIEW'
-                        )
+                            ON i.event_id =
+                               ei.event_id
+
+                        WHERE
+                            ei.organizer_id = %s
+
+                        AND
+                            ei.category_id =
+                            ec.category_id
+
+                        AND
+                            i.interaction_type
+                            IN (
+                                'VIEW',
+                                'DETAIL_VIEW'
+                            )
                     ),
                     0
                 ) AS views,
@@ -683,11 +1011,21 @@ def get_organizer_analytics(
                     (
                         SELECT COUNT(*)
                         FROM bookings b
+
                         JOIN events eb
-                            ON b.event_id = eb.event_id
-                        WHERE eb.organizer_id = %s
-                        AND eb.category_id = ec.category_id
-                        AND b.booking_status != 'cancelled'
+                            ON b.event_id =
+                               eb.event_id
+
+                        WHERE
+                            eb.organizer_id = %s
+
+                        AND
+                            eb.category_id =
+                            ec.category_id
+
+                        AND
+                            b.booking_status
+                            != 'cancelled'
                     ),
                     0
                 ) AS bookings
@@ -695,7 +1033,8 @@ def get_organizer_analytics(
             FROM event_categories ec
 
             JOIN events e
-                ON e.category_id = ec.category_id
+                ON e.category_id =
+                   ec.category_id
 
             WHERE e.organizer_id = %s
 
@@ -703,23 +1042,34 @@ def get_organizer_analytics(
                 ec.category_id,
                 ec.category_name
 
-            ORDER BY bookings DESC, views DESC;
+            ORDER BY
+                bookings DESC,
+                views DESC;
         """, (
             organizer_id,
             organizer_id,
             organizer_id,
         ))
 
-        category_rows = cur.fetchall()
+        category_rows = (
+            cur.fetchall()
+        )
 
         category_performance = []
 
         for row in category_rows:
             category_performance.append({
-                "category_name": row[0],
-                "event_count": row[1],
-                "views": row[2],
-                "bookings": row[3],
+                "category_name":
+                    row[0],
+
+                "event_count":
+                    row[1],
+
+                "views":
+                    row[2],
+
+                "bookings":
+                    row[3],
             })
 
         # ==============================
@@ -738,18 +1088,20 @@ def get_organizer_analytics(
                 )
             )
 
-        cur.close()
-        conn.close()
-
         return jsonify({
             "organizer": {
-                "user_id": organizer[0],
-                "full_name": organizer[1],
+                "user_id":
+                    organizer[0],
+
+                "full_name":
+                    organizer[1],
             },
 
             "summary": {
                 "total_events":
-                    len(event_analytics),
+                    len(
+                        event_analytics
+                    ),
 
                 "total_views":
                     total_views,
@@ -773,7 +1125,8 @@ def get_organizer_analytics(
                     overall_attendance_rate,
             },
 
-            "top_event": top_event,
+            "top_event":
+                top_event,
 
             "category_performance":
                 category_performance,
@@ -787,6 +1140,13 @@ def get_organizer_analytics(
             "message": str(e)
         }), 500
 
+    finally:
+        if cur:
+            cur.close()
+
+        if conn:
+            conn.close()
+
 
 # ==============================
 # UPDATE EVENT
@@ -796,50 +1156,85 @@ def get_organizer_analytics(
     "/<int:event_id>",
     methods=["PUT"]
 )
-def update_event(event_id):
+def update_event(
+    event_id
+):
     data = request.get_json() or {}
 
-    organizer_id = data.get("organizer_id")
-    event_name = data.get("event_name")
-    description = data.get("description")
-    location = data.get("location")
-    event_date = data.get("event_date")
-    end_date = data.get("end_date")
-    capacity = data.get("capacity")
-    category_id = data.get("category_id")
+    organizer_id = data.get(
+        "organizer_id"
+    )
+
+    event_name = data.get(
+        "event_name"
+    )
+
+    description = data.get(
+        "description"
+    )
+
+    location = data.get(
+        "location"
+    )
+
+    event_date = data.get(
+        "event_date"
+    )
+
+    end_date = data.get(
+        "end_date"
+    )
+
+    capacity = data.get(
+        "capacity"
+    )
+
+    category_id = data.get(
+        "category_id"
+    )
 
     if not organizer_id:
         return jsonify({
-            "message": "Organizer ID is required."
+            "message":
+                "Organizer ID is required."
         }), 400
 
     if not event_name:
         return jsonify({
-            "message": "Event name is required."
+            "message":
+                "Event name is required."
         }), 400
 
     if not description:
         return jsonify({
-            "message": "Description is required."
+            "message":
+                "Description is required."
         }), 400
 
     if not location:
         return jsonify({
-            "message": "Location is required."
+            "message":
+                "Location is required."
         }), 400
 
     if not event_date:
         return jsonify({
-            "message": "Event date is required."
+            "message":
+                "Event date is required."
         }), 400
 
-    parsed_event_date = parse_event_datetime(
-        event_date
+    parsed_event_date = (
+        parse_event_datetime(
+            event_date
+        )
     )
 
     if not parsed_event_date:
         return jsonify({
-            "message": "The event start date is invalid."
+            "message": (
+                "The event start date "
+                "is invalid."
+            )
         }), 400
 
     if is_date_before_today(
@@ -847,22 +1242,25 @@ def update_event(event_id):
     ):
         return jsonify({
             "message": (
-                "The event date cannot be "
-                "before today's date."
+                "The event date cannot "
+                "be before today's date."
             )
         }), 400
 
     parsed_end_date = None
 
     if end_date:
-        parsed_end_date = parse_event_datetime(
-            end_date
+        parsed_end_date = (
+            parse_event_datetime(
+                end_date
+            )
         )
 
         if not parsed_end_date:
             return jsonify({
                 "message": (
-                    "The event end date is invalid."
+                    "The event end date "
+                    "is invalid."
                 )
             }), 400
 
@@ -871,30 +1269,34 @@ def update_event(event_id):
         ):
             return jsonify({
                 "message": (
-                    "The event end date cannot be "
-                    "before today's date."
+                    "The event end date "
+                    "cannot be before "
+                    "today's date."
                 )
             }), 400
 
         if (
-            parsed_end_date <=
-            parsed_event_date
+            parsed_end_date
+            <= parsed_event_date
         ):
             return jsonify({
                 "message": (
-                    "The event end time must be "
-                    "after the start time."
+                    "The event end time must "
+                    "be after the start time."
                 )
             }), 400
 
     if capacity is not None:
         try:
-            capacity = int(capacity)
+            capacity = int(
+                capacity
+            )
 
             if capacity < 1:
                 return jsonify({
                     "message": (
-                        "Capacity must be at least 1."
+                        "Capacity must be "
+                        "at least 1."
                     )
                 }), 400
 
@@ -904,62 +1306,71 @@ def update_event(event_id):
         ):
             return jsonify({
                 "message": (
-                    "Capacity must be a valid number."
+                    "Capacity must be "
+                    "a valid number."
                 )
             }), 400
+
+    conn = None
+    cur = None
 
     try:
         conn = get_db_connection()
         cur = conn.cursor()
+
+        # ==============================
+        # EXISTING EVENT
+        # ==============================
 
         cur.execute("""
             SELECT
                 event_id,
                 organizer_id,
                 status,
-                category_id
+                category_id,
+                is_paid,
+                ticket_price
             FROM events
             WHERE event_id = %s;
         """, (
             event_id,
         ))
 
-        existing_event = cur.fetchone()
+        existing_event = (
+            cur.fetchone()
+        )
 
         if not existing_event:
-            cur.close()
-            conn.close()
-
             return jsonify({
-                "message": "Event not found."
+                "message":
+                    "Event not found."
             }), 404
 
         if (
-            existing_event[1] !=
-            int(organizer_id)
+            existing_event[1]
+            != int(organizer_id)
         ):
-            cur.close()
-            conn.close()
-
             return jsonify({
                 "message": (
-                    "You are not allowed to edit "
-                    "this event."
+                    "You are not allowed "
+                    "to edit this event."
                 )
             }), 403
 
         if (
-            existing_event[2] ==
-            "cancelled"
+            existing_event[2]
+            == "cancelled"
         ):
-            cur.close()
-            conn.close()
-
             return jsonify({
                 "message": (
-                    "Cancelled events cannot be edited."
+                    "Cancelled events "
+                    "cannot be edited."
                 )
             }), 400
+
+        # ==============================
+        # CATEGORY
+        # ==============================
 
         final_category_id = (
             category_id
@@ -976,17 +1387,63 @@ def update_event(event_id):
                 final_category_id,
             ))
 
-            category = cur.fetchone()
+            category = (
+                cur.fetchone()
+            )
 
             if not category:
-                cur.close()
-                conn.close()
-
                 return jsonify({
                     "message": (
-                        "Event category not found."
+                        "Event category "
+                        "not found."
                     )
                 }), 404
+
+        # ==============================
+        # PAID / FREE SETTINGS
+        # ==============================
+
+        if "is_paid" in data:
+            final_is_paid = (
+                parse_is_paid(
+                    data.get(
+                        "is_paid"
+                    )
+                )
+            )
+        else:
+            final_is_paid = bool(
+                existing_event[4]
+            )
+
+        if "ticket_price" in data:
+            requested_price = (
+                data.get(
+                    "ticket_price"
+                )
+            )
+        else:
+            requested_price = (
+                existing_event[5]
+            )
+
+        (
+            final_ticket_price,
+            price_error
+        ) = parse_ticket_price(
+            requested_price,
+            final_is_paid
+        )
+
+        if price_error:
+            return jsonify({
+                "message":
+                    price_error
+            }), 400
+
+        # ==============================
+        # UPDATE EVENT
+        # ==============================
 
         cur.execute("""
             UPDATE events
@@ -997,7 +1454,9 @@ def update_event(event_id):
                 location = %s,
                 event_date = %s,
                 end_date = %s,
-                capacity = %s
+                capacity = %s,
+                is_paid = %s,
+                ticket_price = %s
             WHERE event_id = %s
             RETURNING event_id;
         """, (
@@ -1008,7 +1467,9 @@ def update_event(event_id):
             parsed_event_date,
             parsed_end_date,
             capacity,
-            event_id
+            final_is_paid,
+            final_ticket_price,
+            event_id,
         ))
 
         updated_event_id = (
@@ -1017,20 +1478,37 @@ def update_event(event_id):
 
         conn.commit()
 
-        cur.close()
-        conn.close()
-
         return jsonify({
             "message": (
                 "Event updated successfully."
             ),
-            "event_id": updated_event_id
+
+            "event_id":
+                updated_event_id,
+
+            "is_paid":
+                final_is_paid,
+
+            "ticket_price":
+                float(
+                    final_ticket_price
+                ),
         }), 200
 
     except Exception as e:
+        if conn:
+            conn.rollback()
+
         return jsonify({
             "message": str(e)
         }), 500
+
+    finally:
+        if cur:
+            cur.close()
+
+        if conn:
+            conn.close()
 
 
 # ==============================
@@ -1041,7 +1519,9 @@ def update_event(event_id):
     "/<int:event_id>/cancel",
     methods=["PUT"]
 )
-def cancel_event(event_id):
+def cancel_event(
+    event_id
+):
     data = request.get_json() or {}
 
     organizer_id = data.get(
@@ -1050,8 +1530,12 @@ def cancel_event(event_id):
 
     if not organizer_id:
         return jsonify({
-            "message": "Organizer ID is required."
+            "message":
+                "Organizer ID is required."
         }), 400
+
+    conn = None
+    cur = None
 
     try:
         conn = get_db_connection()
@@ -1071,37 +1555,30 @@ def cancel_event(event_id):
         event = cur.fetchone()
 
         if not event:
-            cur.close()
-            conn.close()
-
             return jsonify({
-                "message": "Event not found."
+                "message":
+                    "Event not found."
             }), 404
 
         if (
-            event[1] !=
-            int(organizer_id)
+            event[1]
+            != int(organizer_id)
         ):
-            cur.close()
-            conn.close()
-
             return jsonify({
                 "message": (
-                    "You are not allowed to cancel "
-                    "this event."
+                    "You are not allowed "
+                    "to cancel this event."
                 )
             }), 403
 
         if (
-            event[2] ==
-            "cancelled"
+            event[2]
+            == "cancelled"
         ):
-            cur.close()
-            conn.close()
-
             return jsonify({
                 "message": (
-                    "This event is already cancelled."
+                    "This event is already "
+                    "cancelled."
                 )
             }), 400
 
@@ -1115,21 +1592,32 @@ def cancel_event(event_id):
 
         conn.commit()
 
-        cur.close()
-        conn.close()
-
         return jsonify({
             "message": (
                 "Event cancelled successfully."
             ),
-            "event_id": event_id,
-            "status": "cancelled"
+
+            "event_id":
+                event_id,
+
+            "status":
+                "cancelled",
         }), 200
 
     except Exception as e:
+        if conn:
+            conn.rollback()
+
         return jsonify({
             "message": str(e)
         }), 500
+
+    finally:
+        if cur:
+            cur.close()
+
+        if conn:
+            conn.close()
 
 
 # ==============================
@@ -1140,7 +1628,12 @@ def cancel_event(event_id):
     "/<int:event_id>",
     methods=["GET"]
 )
-def get_event(event_id):
+def get_event(
+    event_id
+):
+    conn = None
+    cur = None
+
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -1156,12 +1649,21 @@ def get_event(event_id):
                 e.capacity,
                 e.status,
                 ec.category_name,
-                u.full_name
+                u.full_name,
+                e.category_id,
+                e.organizer_id,
+                e.is_paid,
+                e.ticket_price
             FROM events e
+
             LEFT JOIN event_categories ec
-                ON e.category_id = ec.category_id
+                ON e.category_id =
+                   ec.category_id
+
             LEFT JOIN users u
-                ON e.organizer_id = u.user_id
+                ON e.organizer_id =
+                   u.user_id
+
             WHERE e.event_id = %s;
         """, (
             event_id,
@@ -1169,19 +1671,24 @@ def get_event(event_id):
 
         row = cur.fetchone()
 
-        cur.close()
-        conn.close()
-
         if not row:
             return jsonify({
-                "message": "Event not found"
+                "message":
+                    "Event not found"
             }), 404
 
         return jsonify({
-            "event_id": row[0],
-            "event_name": row[1],
-            "description": row[2],
-            "location": row[3],
+            "event_id":
+                row[0],
+
+            "event_name":
+                row[1],
+
+            "description":
+                row[2],
+
+            "location":
+                row[3],
 
             "event_date": (
                 row[4].isoformat()
@@ -1195,13 +1702,42 @@ def get_event(event_id):
                 else None
             ),
 
-            "capacity": row[6],
-            "status": row[7],
-            "category_name": row[8],
-            "organizer_name": row[9],
-        })
+            "capacity":
+                row[6],
+
+            "status":
+                row[7],
+
+            "category_name":
+                row[8],
+
+            "organizer_name":
+                row[9],
+
+            "category_id":
+                row[10],
+
+            "organizer_id":
+                row[11],
+
+            "is_paid":
+                bool(row[12]),
+
+            "ticket_price": (
+                float(row[13])
+                if row[13] is not None
+                else 0.0
+            ),
+        }), 200
 
     except Exception as e:
         return jsonify({
             "message": str(e)
         }), 500
+
+    finally:
+        if cur:
+            cur.close()
+
+        if conn:
+            conn.close()

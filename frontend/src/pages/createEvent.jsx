@@ -12,6 +12,8 @@ function CreateEvent({ user, onBack, onEventCreated }) {
     event_date: "",
     end_date: "",
     capacity: "",
+    is_paid: false,
+    ticket_price: "",
   });
 
   const [message, setMessage] = useState("");
@@ -36,12 +38,6 @@ function CreateEvent({ user, onBack, onEventCreated }) {
       now.getDate()
     ).padStart(2, "0");
 
-    /*
-      We only block dates BEFORE today.
-
-      Today's date is allowed,
-      regardless of the selected time.
-    */
     return `${year}-${month}-${day}T00:00`;
   }, []);
 
@@ -95,25 +91,23 @@ function CreateEvent({ user, onBack, onEventCreated }) {
   ========================= */
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
+    const { name, value, type, checked } =
+      event.target;
 
     setFormData((current) => {
       const updated = {
         ...current,
-        [name]: value,
+        [name]:
+          type === "checkbox"
+            ? checked
+            : value,
       };
 
-      /*
-        If the start date changes and
-        the currently selected end date
-        becomes invalid, clear end date.
-      */
       if (
         name === "event_date" &&
         current.end_date
       ) {
-        const newStart =
-          new Date(value);
+        const newStart = new Date(value);
 
         const existingEnd =
           new Date(current.end_date);
@@ -131,8 +125,35 @@ function CreateEvent({ user, onBack, onEventCreated }) {
         }
       }
 
+      if (
+        name === "is_paid" &&
+        checked === false
+      ) {
+        updated.ticket_price = "";
+      }
+
       return updated;
     });
+
+    if (messageType === "error") {
+      setMessage("");
+      setMessageType("");
+    }
+  };
+
+  /* =========================
+     SET EVENT TYPE
+  ========================= */
+
+  const handleEventType = (paid) => {
+    setFormData((current) => ({
+      ...current,
+      is_paid: paid,
+      ticket_price:
+        paid
+          ? current.ticket_price
+          : "",
+    }));
 
     if (messageType === "error") {
       setMessage("");
@@ -237,21 +258,6 @@ function CreateEvent({ user, onBack, onEventCreated }) {
       return;
     }
 
-    /*
-      Compare calendar dates only.
-
-      Example:
-      Today = 10 Nov 2026
-
-      Allowed:
-      10 Nov 2026
-      11 Nov 2026
-      future dates
-
-      Rejected:
-      9 Nov 2026 and earlier
-    */
-
     const selectedStartDate =
       formData.event_date.split("T")[0];
 
@@ -321,6 +327,28 @@ function CreateEvent({ user, onBack, onEventCreated }) {
       return;
     }
 
+    if (formData.is_paid) {
+      if (!formData.ticket_price) {
+        setMessage(
+          "Please enter the ticket price."
+        );
+
+        setMessageType("error");
+        return;
+      }
+
+      if (
+        Number(formData.ticket_price) <= 0
+      ) {
+        setMessage(
+          "Ticket price must be greater than KES 0."
+        );
+
+        setMessageType("error");
+        return;
+      }
+    }
+
     setSubmitting(true);
 
     const payload = {
@@ -353,6 +381,16 @@ function CreateEvent({ user, onBack, onEventCreated }) {
 
       organizer_id:
         Number(user.user_id),
+
+      is_paid:
+        formData.is_paid,
+
+      ticket_price:
+        formData.is_paid
+          ? Number(
+              formData.ticket_price
+            )
+          : 0,
     };
 
     console.log(
@@ -400,6 +438,12 @@ function CreateEvent({ user, onBack, onEventCreated }) {
 
         event_name:
           payload.event_name,
+
+        is_paid:
+          payload.is_paid,
+
+        ticket_price:
+          payload.ticket_price,
       });
 
       setMessage(
@@ -416,6 +460,8 @@ function CreateEvent({ user, onBack, onEventCreated }) {
         event_date: "",
         end_date: "",
         capacity: "",
+        is_paid: false,
+        ticket_price: "",
       });
     } catch (error) {
       console.error(
@@ -704,6 +750,141 @@ function CreateEvent({ user, onBack, onEventCreated }) {
 
             </div>
 
+            <div
+              className="create-event-field full-width"
+              style={{
+                marginTop: "8px",
+              }}
+            >
+              <label>
+                Event Access *
+              </label>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(2, minmax(0, 1fr))",
+                  gap: "12px",
+                  marginTop: "8px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleEventType(false)
+                  }
+                  style={{
+                    padding: "16px",
+                    borderRadius: "14px",
+                    cursor: "pointer",
+                    border:
+                      !formData.is_paid
+                        ? "2px solid #6c63ff"
+                        : "1px solid #dedbe5",
+                    background:
+                      !formData.is_paid
+                        ? "#f4f2ff"
+                        : "#ffffff",
+                    textAlign: "left",
+                  }}
+                >
+                  <strong
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    Free Event
+                  </strong>
+
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      color: "#817a89",
+                    }}
+                  >
+                    Students can book without payment.
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleEventType(true)
+                  }
+                  style={{
+                    padding: "16px",
+                    borderRadius: "14px",
+                    cursor: "pointer",
+                    border:
+                      formData.is_paid
+                        ? "2px solid #6c63ff"
+                        : "1px solid #dedbe5",
+                    background:
+                      formData.is_paid
+                        ? "#f4f2ff"
+                        : "#ffffff",
+                    textAlign: "left",
+                  }}
+                >
+                  <strong
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    Paid Event
+                  </strong>
+
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      color: "#817a89",
+                    }}
+                  >
+                    Students pay using M-Pesa before receiving a ticket.
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {formData.is_paid && (
+              <div
+                className="create-event-field full-width"
+              >
+                <label htmlFor="ticket_price">
+                  Ticket Price (KES) *
+                </label>
+
+                <input
+                  id="ticket_price"
+                  name="ticket_price"
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 500"
+                  value={
+                    formData.ticket_price
+                  }
+                  onChange={
+                    handleChange
+                  }
+                />
+
+                <small
+                  style={{
+                    color: "#817a89",
+                    marginTop: "6px",
+                    display: "block",
+                    fontSize: "12px",
+                  }}
+                >
+                  Students will be prompted to pay this amount through M-Pesa.
+                </small>
+              </div>
+            )}
+
             {message && (
               <div
                 className={`create-event-message ${messageType}`}
@@ -766,6 +947,24 @@ function CreateEvent({ user, onBack, onEventCreated }) {
                 Your event has been published successfully
                 and can now be discovered by students.
               </p>
+
+              <div
+                style={{
+                  marginTop: "14px",
+                  padding: "14px 18px",
+                  borderRadius: "14px",
+                  background: "#f7f6fb",
+                  display: "inline-block",
+                }}
+              >
+                <strong>
+                  {createdEvent.is_paid
+                    ? `Paid Event • KES ${Number(
+                        createdEvent.ticket_price
+                      ).toLocaleString()}`
+                    : "Free Event"}
+                </strong>
+              </div>
 
               <div className="create-event-actions">
 
