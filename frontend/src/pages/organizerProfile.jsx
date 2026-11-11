@@ -40,12 +40,10 @@ function OrganizerProfile({ user, onBack }) {
       );
 
       setMessageType("error");
-
       return;
     }
 
     setLoading(true);
-    setMessage("");
 
     try {
       const response = await fetch(
@@ -61,20 +59,23 @@ function OrganizerProfile({ user, onBack }) {
         );
       }
 
-      setProfile(data);
+      const loadedProfile =
+        data.profile || data;
+
+      setProfile(loadedProfile);
 
       setFormData({
         full_name:
-          data.full_name || "",
+          loadedProfile.full_name || "",
 
         email:
-          data.email || "",
+          loadedProfile.email || "",
 
         phone_number:
-          data.phone_number || "",
+          loadedProfile.phone_number || "",
 
         institution:
-          data.institution || "",
+          loadedProfile.institution || "",
       });
     } catch (error) {
       console.error(
@@ -95,35 +96,26 @@ function OrganizerProfile({ user, onBack }) {
 
   useEffect(() => {
     loadProfile();
-  }, [user]);
+  }, [user?.user_id]);
 
   /* =========================
      PROFILE FIELD CHANGE
   ========================= */
 
-  const handleProfileChange = (
-    event
-  ) => {
-    const {
-      name,
-      value,
-    } = event.target;
+  const handleProfileChange = (event) => {
+    const { name, value } = event.target;
 
-    setFormData(
-      (current) => ({
-        ...current,
-        [name]: value,
-      })
-    );
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
+    }));
   };
 
   /* =========================
      SAVE PROFILE
   ========================= */
 
-  const handleSaveProfile = async (
-    event
-  ) => {
+  const handleSaveProfile = async (event) => {
     event.preventDefault();
 
     if (!formData.full_name.trim()) {
@@ -175,8 +167,7 @@ function OrganizerProfile({ user, onBack }) {
         }
       );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
         setMessage(
@@ -188,13 +179,74 @@ function OrganizerProfile({ user, onBack }) {
         return;
       }
 
+      const updatedProfile =
+        data.profile || data;
+
+      /*
+       * Keep the currently logged-in user
+       * object in sync with PostgreSQL.
+       *
+       * OrganizerDashboard reads the
+       * organizer name directly from this
+       * user object.
+       */
+      if (user) {
+        user.full_name =
+          updatedProfile.full_name ||
+          formData.full_name.trim();
+
+        user.email =
+          updatedProfile.email ||
+          formData.email.trim();
+
+        user.phone_number =
+          updatedProfile.phone_number ??
+          formData.phone_number.trim();
+
+        user.institution =
+          updatedProfile.institution ??
+          formData.institution.trim();
+      }
+
+      setProfile((current) => ({
+        ...(current || {}),
+        ...updatedProfile,
+      }));
+
+      setFormData({
+        full_name:
+          updatedProfile.full_name ||
+          formData.full_name.trim(),
+
+        email:
+          updatedProfile.email ||
+          formData.email.trim(),
+
+        phone_number:
+          updatedProfile.phone_number ||
+          formData.phone_number.trim(),
+
+        institution:
+          updatedProfile.institution ||
+          formData.institution.trim(),
+      });
+
       setMessage(
         "Organizer profile updated successfully."
       );
 
       setMessageType("success");
 
-      await loadProfile();
+      /*
+       * Returning to the dashboard causes
+       * OrganizerDashboard to render again.
+       * Since the user object above is now
+       * updated, the sidebar and welcome
+       * heading change immediately.
+       */
+      if (onBack) {
+        onBack();
+      }
     } catch (error) {
       console.error(
         "Organizer profile update error:",
@@ -215,9 +267,7 @@ function OrganizerProfile({ user, onBack }) {
      PHOTO UPLOAD
   ========================= */
 
-  const handlePhotoSelect = async (
-    event
-  ) => {
+  const handlePhotoSelect = async (event) => {
     const file =
       event.target.files?.[0];
 
@@ -306,29 +356,20 @@ function OrganizerProfile({ user, onBack }) {
      PASSWORD FIELD CHANGE
   ========================= */
 
-  const handlePasswordChange = (
-    event
-  ) => {
-    const {
-      name,
-      value,
-    } = event.target;
+  const handlePasswordChange = (event) => {
+    const { name, value } = event.target;
 
-    setPasswordData(
-      (current) => ({
-        ...current,
-        [name]: value,
-      })
-    );
+    setPasswordData((current) => ({
+      ...current,
+      [name]: value,
+    }));
   };
 
   /* =========================
      CHANGE PASSWORD
   ========================= */
 
-  const handlePasswordSubmit = async (
-    event
-  ) => {
+  const handlePasswordSubmit = async (event) => {
     event.preventDefault();
 
     if (
@@ -398,6 +439,9 @@ function OrganizerProfile({ user, onBack }) {
 
             new_password:
               passwordData.new_password,
+
+            confirm_password:
+              passwordData.confirm_password,
           }),
         }
       );
@@ -460,9 +504,14 @@ function OrganizerProfile({ user, onBack }) {
      PROFILE PHOTO
   ========================= */
 
+  const rawPhotoUrl =
+    profile?.profile_photo || null;
+
   const photoUrl =
-    profile?.profile_photo
-      ? `http://127.0.0.1:5000/${profile.profile_photo}`
+    rawPhotoUrl
+      ? rawPhotoUrl.startsWith("http")
+        ? rawPhotoUrl
+        : `http://127.0.0.1:5000/${rawPhotoUrl}`
       : null;
 
   const organizerInitial =
