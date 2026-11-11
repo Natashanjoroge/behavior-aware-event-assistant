@@ -143,45 +143,6 @@ function OrganizerDashboard({ user }) {
     }
   }, [activeView, checkInEventId, user]);
 
-  if (activeView === "create-event") {
-    return (
-      <CreateEvent
-        user={user}
-        onBack={() => setActiveView("dashboard")}
-        onEventCreated={() => {
-          loadEvents();
-          setActiveView("dashboard");
-        }}
-      />
-    );
-  }
-
-  const now = new Date();
-
-  const allUpcomingEvents = events.filter(
-    (event) =>
-      event.event_date &&
-      new Date(event.event_date) >= now &&
-      event.status !== "cancelled"
-  );
-
-  const upcomingEvents = [...allUpcomingEvents]
-    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
-    .slice(0, 4);
-
-  const pastEvents = events.filter(
-    (event) =>
-      event.event_date &&
-      new Date(event.event_date) < now &&
-      event.status !== "cancelled"
-  );
-
-  const cancelledEvents = events.filter(
-    (event) => event.status === "cancelled"
-  );
-
-  const totalEvents = events.length;
-
   const managedEvents = useMemo(() => {
     const query = manageSearch.trim().toLowerCase();
 
@@ -220,6 +181,45 @@ function OrganizerDashboard({ user }) {
       return matchesFilter && matchesSearch;
     });
   }, [events, manageSearch, manageFilter]);
+
+  if (activeView === "create-event") {
+    return (
+      <CreateEvent
+        user={user}
+        onBack={() => setActiveView("dashboard")}
+        onEventCreated={() => {
+          loadEvents();
+          setActiveView("dashboard");
+        }}
+      />
+    );
+  }
+
+  const now = new Date();
+
+  const allUpcomingEvents = events.filter(
+    (event) =>
+      event.event_date &&
+      new Date(event.event_date) >= now &&
+      event.status !== "cancelled"
+  );
+
+  const upcomingEvents = [...allUpcomingEvents]
+    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
+    .slice(0, 4);
+
+  const pastEvents = events.filter(
+    (event) =>
+      event.event_date &&
+      new Date(event.event_date) < now &&
+      event.status !== "cancelled"
+  );
+
+  const cancelledEvents = events.filter(
+    (event) => event.status === "cancelled"
+  );
+
+  const totalEvents = events.length;
 
   const handleViewEvent = (event) => {
     setSelectedEvent(event);
