@@ -6,73 +6,181 @@ import Interests from "./interests";
 import StudentProfile from "./studentProfile";
 import "../styles/studentDashboard.css";
 
+const API = "http://127.0.0.1:5000";
+
+const CATEGORIES = [
+  { label: "All", databaseName: null },
+  { label: "Social", databaseName: "Social & Entertainment" },
+  { label: "Sports", databaseName: "Sports & Fitness" },
+  { label: "Academic", databaseName: "Academic & Educational" },
+  { label: "Career", databaseName: "Career & Professional" },
+  { label: "Arts", databaseName: "Arts & Culture" },
+  { label: "Technology", databaseName: "Technology & Innovation" },
+  { label: "Clubs", databaseName: "Clubs & Societies" },
+  { label: "Wellness", databaseName: "Wellness & Lifestyle" },
+  { label: "Community", databaseName: "Community & Volunteering" },
+  { label: "Faith", databaseName: "Faith & Spirituality" },
+];
+
+const CATEGORY_ICONS = {
+  "Social & Entertainment": "🎉",
+  "Sports & Fitness": "🏀",
+  "Academic & Educational": "📚",
+  "Career & Professional": "💼",
+  "Arts & Culture": "🎨",
+  "Technology & Innovation": "💻",
+  "Clubs & Societies": "👥",
+  "Wellness & Lifestyle": "🌿",
+  "Community & Volunteering": "🤝",
+  "Faith & Spirituality": "✨",
+};
+
+const INTEREST_ICONS = {
+  All: "✨",
+  Social: "🎉",
+  Sports: "🏀",
+  Academic: "📚",
+  Career: "💼",
+  Arts: "🎨",
+  Technology: "💻",
+  Clubs: "👥",
+  Wellness: "🌿",
+  Community: "🤝",
+  Faith: "⭐",
+};
+
+function parseEventDate(value) {
+  if (!value) return null;
+
+  const text = String(value);
+  const dateOnly = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (dateOnly) {
+    const date = new Date(
+      Number(dateOnly[1]),
+      Number(dateOnly[2]) - 1,
+      Number(dateOnly[3])
+    );
+
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isUpcomingEvent(event) {
+  if (!event) return false;
+
+  const status = String(
+    event.event_status ?? event.status ?? ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    ["cancelled", "canceled", "completed", "past", "ended"].includes(
+      status
+    )
+  ) {
+    return false;
+  }
+
+  const eventDate = parseEventDate(event.event_date);
+
+  if (!eventDate) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  eventDate.setHours(0, 0, 0, 0);
+
+  return eventDate >= today;
+}
+
+function formatDate(value) {
+  const date = parseEventDate(value);
+
+  if (!date) return "";
+
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function getDay(value) {
+  const date = parseEventDate(value);
+
+  if (!date) return "";
+
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+  });
+}
+
+function getMonth(value) {
+  const date = parseEventDate(value);
+
+  if (!date) return "";
+
+  return date
+    .toLocaleDateString("en-GB", {
+      month: "short",
+    })
+    .toUpperCase();
+}
+
+function getCategoryIcon(category) {
+  return CATEGORY_ICONS[category] || "📅";
+}
+
+function getInterestIcon(category) {
+  return INTEREST_ICONS[category] || "✨";
+}
+
 function StudentDashboard({ user }) {
   const [events, setEvents] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+  const [savedEventIds, setSavedEventIds] = useState([]);
 
   const [activeView, setActiveView] = useState("home");
-  const [savedEventIds, setSavedEventIds] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [recommendationLoading, setRecommendationLoading] =
     useState(true);
 
-  const [recommendationType, setRecommendationType] =
-    useState("");
+  const [recommendationType, setRecommendationType] = useState("");
+  const [recommendationModel, setRecommendationModel] = useState("");
 
-  const [recommendationModel, setRecommendationModel] =
-    useState("");
-
-  const [selectedEventId, setSelectedEventId] =
-    useState(null);
-
-  const [showEventDetails, setShowEventDetails] =
-    useState(false);
+  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [showEventDetails, setShowEventDetails] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] =
-    useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchMessage, setSearchMessage] = useState("");
 
-  const [searchMessage, setSearchMessage] =
-    useState("");
+  const loadEvents = async () => {
+    setLoading(true);
 
-  /* =========================
-     LOAD ALL EVENTS
-  ========================= */
+    try {
+      const response = await fetch(`${API}/api/events/`);
+      const data = await response.json();
 
-  useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        const response = await fetch(
-          "http://127.0.0.1:5000/api/events/"
-        );
-
-        const data = await response.json();
-
-        if (response.ok) {
-          setEvents(data);
-        } else {
-          console.error(
-            "Could not load events:",
-            data
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Could not connect to events API:",
-          error
-        );
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(data.message || "Could not load events.");
       }
-    };
 
-    loadEvents();
-  }, []);
-
-  /* =========================
-     LOAD HYBRID RECOMMENDATIONS
-  ========================= */
+      setEvents(Array.isArray(data) ? data : data.events || []);
+    } catch (error) {
+      console.error("Could not load events:", error);
+      setEvents([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadRecommendations = async () => {
     if (!user?.user_id) {
@@ -84,263 +192,172 @@ function StudentDashboard({ user }) {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:5000/api/recommendations/for-you/${user.user_id}`
+        `${API}/api/recommendations/for-you/${user.user_id}`
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        console.error(
-          "Recommendation error:",
-          data
+        throw new Error(
+          data.message || "Could not load recommendations."
         );
-
-        setRecommendations([]);
-        return;
       }
 
       setRecommendations(
-        data.events || []
+        Array.isArray(data.events) ? data.events : []
       );
 
-      setRecommendationType(
-        data.recommendation_type || ""
-      );
-
-      setRecommendationModel(
-        data.recommendation_model || ""
-      );
+      setRecommendationType(data.recommendation_type || "");
+      setRecommendationModel(data.recommendation_model || "");
     } catch (error) {
-      console.error(
-        "Could not load recommendations:",
-        error
-      );
-
+      console.error("Recommendation error:", error);
       setRecommendations([]);
     } finally {
       setRecommendationLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadRecommendations();
-  }, [user]);
-
-  /* =========================
-     RELOAD RECOMMENDATIONS
-     AFTER INTEREST CHANGES
-  ========================= */
-
-  const handleReturnFromInterests = async () => {
-    setActiveView("home");
-    await loadRecommendations();
-  };
-
-  /* =========================
-     LOAD BOOKMARKS
-  ========================= */
-
-  useEffect(() => {
-    const loadBookmarks = async () => {
-      if (!user?.user_id) return;
-
-      try {
-        const response = await fetch(
-          `http://127.0.0.1:5000/api/bookmarks/${user.user_id}`
-        );
-
-        const data = await response.json();
-
-        if (response.ok) {
-          setSavedEventIds(
-            data.map(
-              (bookmark) =>
-                bookmark.event_id
-            )
-          );
-        } else {
-          console.error(
-            "Could not load bookmarks:",
-            data
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Bookmark loading error:",
-          error
-        );
-      }
-    };
-
-    loadBookmarks();
-  }, [user]);
-
-  /* =========================
-     TOGGLE BOOKMARK
-  ========================= */
-
-  const toggleBookmark = async (
-    eventId
-  ) => {
+  const loadBookmarks = async () => {
     if (!user?.user_id) return;
-
-    const isSaved =
-      savedEventIds.includes(eventId);
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:5000/api/bookmarks/",
-        {
-          method: isSaved
-            ? "DELETE"
-            : "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify({
-            user_id: user.user_id,
-            event_id: eventId,
-          }),
-        }
+        `${API}/api/bookmarks/${user.user_id}`
       );
 
       const data = await response.json();
 
-      if (!response.ok) {
-        console.error(
-          "Bookmark error:",
-          data
+      if (response.ok && Array.isArray(data)) {
+        setSavedEventIds(
+          data.map((bookmark) => bookmark.event_id)
         );
+      }
+    } catch (error) {
+      console.error("Bookmark loading error:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  useEffect(() => {
+    loadRecommendations();
+    loadBookmarks();
+  }, [user?.user_id]);
+
+  const toggleBookmark = async (eventId) => {
+    if (!user?.user_id) return;
+
+    const isSaved = savedEventIds.includes(eventId);
+
+    try {
+      const response = await fetch(`${API}/api/bookmarks/`, {
+        method: isSaved ? "DELETE" : "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          user_id: user.user_id,
+          event_id: eventId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Bookmark error:", data);
         return;
       }
 
-      if (isSaved) {
-        setSavedEventIds(
-          (current) =>
-            current.filter(
-              (id) => id !== eventId
-            )
-        );
-      } else {
-        setSavedEventIds(
-          (current) => [
-            ...current,
-            eventId,
-          ]
-        );
+      setSavedEventIds((current) =>
+        isSaved
+          ? current.filter((id) => id !== eventId)
+          : [...current, eventId]
+      );
 
+      if (!isSaved) {
         try {
-          await fetch(
-            "http://127.0.0.1:5000/api/interactions/log",
-            {
-              method: "POST",
+          await fetch(`${API}/api/interactions/log`, {
+            method: "POST",
 
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
+            headers: {
+              "Content-Type": "application/json",
+            },
 
-              body: JSON.stringify({
-                user_id:
-                  user.user_id,
-
-                event_id:
-                  eventId,
-
-                interaction_type:
-                  "BOOKMARK",
-
-                session_id:
-                  null,
-              }),
-            }
-          );
+            body: JSON.stringify({
+              user_id: user.user_id,
+              event_id: eventId,
+              interaction_type: "BOOKMARK",
+              session_id: null,
+            }),
+          });
 
           await loadRecommendations();
         } catch (error) {
           console.error(
-            "Could not log bookmark interaction:",
+            "Interaction logging error:",
             error
           );
         }
       }
     } catch (error) {
-      console.error(
-        "Bookmark request failed:",
-        error
-      );
+      console.error("Bookmark request failed:", error);
     }
   };
 
-  /* =========================
-     OPEN EVENT DETAILS
-  ========================= */
-
-  const openEventDetails = (
-    eventId
-  ) => {
+  const openEventDetails = (eventId) => {
     setSelectedEventId(eventId);
     setShowEventDetails(true);
   };
 
-  /* =========================
-     SEARCH
-  ========================= */
+  const closeEventDetails = async () => {
+    setSelectedEventId(null);
+    setShowEventDetails(false);
 
-  const handleSearchSubmit =
-    async (event) => {
-      event.preventDefault();
+    await Promise.all([
+      loadEvents(),
+      loadRecommendations(),
+      loadBookmarks(),
+    ]);
+  };
 
-      const cleanedQuery =
-        searchQuery.trim();
+  const handleSearchSubmit = async (event) => {
+    event.preventDefault();
 
-      if (!cleanedQuery) {
-        setSearchMessage("");
-        return;
-      }
+    const query = searchQuery.trim();
 
-      setSearchMessage(
-        `Showing results for "${cleanedQuery}"`
-      );
+    if (!query) {
+      setSearchMessage("");
+      return;
+    }
 
-      if (!user?.user_id) return;
+    setActiveView("home");
+    setSearchMessage(`Showing results for "${query}"`);
 
-      try {
-        await fetch(
-          "http://127.0.0.1:5000/api/interactions/log",
-          {
-            method: "POST",
+    if (!user?.user_id) return;
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+    try {
+      await fetch(`${API}/api/interactions/log`, {
+        method: "POST",
 
-            body: JSON.stringify({
-              user_id:
-                user.user_id,
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-              event_id:
-                null,
-
-              interaction_type:
-                "SEARCH",
-
-              session_id:
-                null,
-            }),
-          }
-        );
-      } catch (error) {
-        console.error(
-          "Could not log search interaction:",
-          error
-        );
-      }
-    };
+        body: JSON.stringify({
+          user_id: user.user_id,
+          event_id: null,
+          interaction_type: "SEARCH",
+          session_id: null,
+        }),
+      });
+    } catch (error) {
+      console.error("Search interaction error:", error);
+    }
+  };
 
   const clearSearch = () => {
     setSearchQuery("");
@@ -348,231 +365,109 @@ function StudentDashboard({ user }) {
     setSearchMessage("");
   };
 
-  /* =========================
-     CATEGORIES
-  ========================= */
+  const upcomingEvents = useMemo(() => {
+    return [...events]
+      .filter(isUpcomingEvent)
+      .sort((a, b) => {
+        const first =
+          parseEventDate(a.event_date)?.getTime() ?? Infinity;
 
-  const categories = [
-    {
-      label: "All",
-      databaseName: null,
-    },
-    {
-      label: "Social",
-      databaseName:
-        "Social & Entertainment",
-    },
-    {
-      label: "Sports",
-      databaseName:
-        "Sports & Fitness",
-    },
-    {
-      label: "Academic",
-      databaseName:
-        "Academic & Educational",
-    },
-    {
-      label: "Career",
-      databaseName:
-        "Career & Professional",
-    },
-    {
-      label: "Arts",
-      databaseName:
-        "Arts & Culture",
-    },
-    {
-      label: "Technology",
-      databaseName:
-        "Technology & Innovation",
-    },
-    {
-      label: "Clubs",
-      databaseName:
-        "Clubs & Societies",
-    },
-    {
-      label: "Wellness",
-      databaseName:
-        "Wellness & Lifestyle",
-    },
-    {
-      label: "Community",
-      databaseName:
-        "Community & Volunteering",
-    },
-    {
-      label: "Faith",
-      databaseName:
-        "Faith & Spirituality",
-    },
-  ];
+        const second =
+          parseEventDate(b.event_date)?.getTime() ?? Infinity;
 
-  /* =========================
-     FILTER EVENTS
-  ========================= */
+        return first - second;
+      });
+  }, [events]);
 
-  const filteredEvents = useMemo(
-    () => {
-      const query =
-        searchQuery
-          .trim()
-          .toLowerCase();
+  const filteredEvents = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
 
-      const selectedCategoryObject =
-        categories.find(
-          (category) =>
-            category.label ===
-            selectedCategory
-        );
-
-      return events.filter(
-        (event) => {
-          const matchesSearch =
-            !query ||
-            event.event_name
-              ?.toLowerCase()
-              .includes(query) ||
-            event.description
-              ?.toLowerCase()
-              .includes(query) ||
-            event.location
-              ?.toLowerCase()
-              .includes(query) ||
-            event.category_name
-              ?.toLowerCase()
-              .includes(query);
-
-          const matchesCategory =
-            selectedCategory ===
-              "All" ||
-            event.category_name ===
-              selectedCategoryObject
-                ?.databaseName;
-
-          return (
-            matchesSearch &&
-            matchesCategory
-          );
-        }
-      );
-    },
-    [
-      events,
-      searchQuery,
-      selectedCategory,
-    ]
-  );
-
-  /* =========================
-     DATA
-  ========================= */
-
-  const featuredEvent =
-    filteredEvents.length > 0
-      ? filteredEvents[0]
-      : null;
-
-  const homepageRecommendations =
-    recommendations.slice(0, 3);
-
-  const savedEvents =
-    events.filter((event) =>
-      savedEventIds.includes(
-        event.event_id
-      )
+    const selected = CATEGORIES.find(
+      (category) => category.label === selectedCategory
     );
 
-  /* =========================
-     EVENT DETAILS VIEW
-  ========================= */
+    return upcomingEvents.filter((event) => {
+      const matchesSearch =
+        !query ||
+        [
+          event.event_name,
+          event.description,
+          event.location,
+          event.category_name,
+        ].some((value) =>
+          String(value || "").toLowerCase().includes(query)
+        );
 
-  if (
-    showEventDetails &&
-    selectedEventId
-  ) {
+      const matchesCategory =
+        selectedCategory === "All" ||
+        event.category_name === selected?.databaseName;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [upcomingEvents, searchQuery, selectedCategory]);
+
+  const featuredEvent = filteredEvents[0] || null;
+
+  const upcomingRecommendations = useMemo(() => {
+    return recommendations.filter(isUpcomingEvent);
+  }, [recommendations]);
+
+  const homepageRecommendations =
+    upcomingRecommendations.slice(0, 3);
+
+  const savedEvents = events.filter((event) =>
+    savedEventIds.includes(event.event_id)
+  );
+
+  if (showEventDetails && selectedEventId) {
     return (
       <EventDetails
         eventId={selectedEventId}
         user={user}
-        onBack={() => {
-          setShowEventDetails(false);
-          setSelectedEventId(null);
+        onBack={closeEventDetails}
+      />
+    );
+  }
 
-          loadRecommendations();
+  if (activeView === "my-events") {
+    return (
+      <MyEvents
+        user={user}
+        onBack={() => setActiveView("home")}
+      />
+    );
+  }
+
+  if (activeView === "interests") {
+    return (
+      <Interests
+        user={user}
+        onBack={async () => {
+          setActiveView("home");
+          await loadRecommendations();
         }}
       />
     );
   }
 
-  /* =========================
-     MY EVENTS
-  ========================= */
-
-  if (
-    activeView === "my-events"
-  ) {
-    return (
-      <MyEvents
-        user={user}
-        onBack={() =>
-          setActiveView("home")
-        }
-      />
-    );
-  }
-
-  /* =========================
-     INTERESTS
-  ========================= */
-
-  if (
-    activeView === "interests"
-  ) {
-    return (
-      <Interests
-        user={user}
-        onBack={
-          handleReturnFromInterests
-        }
-      />
-    );
-  }
-
-  /* =========================
-     DASHBOARD
-  ========================= */
-
   return (
     <div className="student-layout">
-
-      {/* SIDEBAR */}
-
       <aside className="student-sidebar">
-
         <Logo compact />
 
         <nav className="student-nav">
-
           <button
-            className={
-              activeView === "home"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setActiveView("home")
-            }
+            type="button"
+            className={activeView === "home" ? "active" : ""}
+            onClick={() => setActiveView("home")}
           >
             🏠 Home
           </button>
 
           <button
+            type="button"
             className={
-              activeView === "for-you"
-                ? "active"
-                : ""
+              activeView === "for-you" ? "active" : ""
             }
             onClick={() => {
               setActiveView("for-you");
@@ -585,70 +480,50 @@ function StudentDashboard({ user }) {
           <button
             type="button"
             onClick={() => {
-              setActiveView("home");
               clearSearch();
+              setActiveView("home");
             }}
           >
             🔎 Explore
           </button>
 
           <button
+            type="button"
             className={
-              activeView ===
-              "my-events"
-                ? "active"
-                : ""
+              activeView === "my-events" ? "active" : ""
             }
-            onClick={() =>
-              setActiveView(
-                "my-events"
-              )
-            }
+            onClick={() => setActiveView("my-events")}
           >
             📅 My Events
           </button>
 
           <button
-            className={
-              activeView === "saved"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setActiveView("saved")
-            }
+            type="button"
+            className={activeView === "saved" ? "active" : ""}
+            onClick={() => setActiveView("saved")}
           >
             ♥ Saved
           </button>
 
           <button
-            className={
-              activeView === "interests"
-                ? "active"
-                : ""
-            }
             type="button"
-            onClick={() =>
-              setActiveView("interests")
+            className={
+              activeView === "interests" ? "active" : ""
             }
+            onClick={() => setActiveView("interests")}
           >
             🎯 Interests
           </button>
 
           <button
-            className={
-              activeView === "profile"
-                ? "active"
-                : ""
-            }
             type="button"
-            onClick={() =>
-              setActiveView("profile")
+            className={
+              activeView === "profile" ? "active" : ""
             }
+            onClick={() => setActiveView("profile")}
           >
             👤 Profile
           </button>
-
         </nav>
 
         <div className="interest-note">
@@ -656,23 +531,13 @@ function StudentDashboard({ user }) {
             Fuel your feed with the things you love
           </strong>
         </div>
-
       </aside>
 
-      {/* MAIN */}
-
       <main className="student-main">
-
-        {/* HEADER */}
-
         <header className="student-header">
-
           <div>
             <h1>
-              Hi{" "}
-              {user?.full_name ||
-                "Student"}{" "}
-              👋
+              Hi {user?.full_name || "Student"} 👋
             </h1>
 
             <p>
@@ -681,37 +546,19 @@ function StudentDashboard({ user }) {
           </div>
 
           <div className="header-actions">
-
             <form
-              onSubmit={
-                handleSearchSubmit
-              }
-              style={{
-                display: "flex",
-                gap: "8px",
-              }}
+              className="student-search-form"
+              onSubmit={handleSearchSubmit}
             >
               <input
                 type="text"
                 placeholder="Search events, topics or venues..."
-                value={
-                  searchQuery
-                }
-                onChange={(
-                  event
-                ) => {
-                  setSearchQuery(
-                    event.target
-                      .value
-                  );
+                value={searchQuery}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value);
 
-                  if (
-                    !event.target
-                      .value.trim()
-                  ) {
-                    setSearchMessage(
-                      ""
-                    );
+                  if (!event.target.value.trim()) {
+                    setSearchMessage("");
                   }
                 }}
               />
@@ -719,26 +566,17 @@ function StudentDashboard({ user }) {
               {searchQuery && (
                 <button
                   type="button"
-                  onClick={
-                    clearSearch
-                  }
-                  style={{
-                    border: "none",
-                    background:
-                      "transparent",
-                    cursor:
-                      "pointer",
-                  }}
+                  className="clear-search-button"
+                  onClick={clearSearch}
                 >
                   ✕
                 </button>
               )}
-
             </form>
 
             <button
-              className="notification-btn"
               type="button"
+              className="notification-btn"
             >
               🔔
             </button>
@@ -746,109 +584,49 @@ function StudentDashboard({ user }) {
             <button
               type="button"
               className="profile-circle"
-              onClick={() =>
-                setActiveView("profile")
-              }
-              style={{
-                border: "none",
-                cursor: "pointer",
-              }}
+              onClick={() => setActiveView("profile")}
             >
-              {user?.full_name?.charAt(
-                0
-              ) || "S"}
+              {user?.full_name?.charAt(0) || "S"}
             </button>
-
           </div>
         </header>
 
-        {/* =========================
-            HOME
-        ========================= */}
-
         {activeView === "home" && (
           <>
-
-            {/* CATEGORY FILTER */}
-
             <section className="interest-row">
+              {CATEGORIES.map((category) => (
+                <button
+                  key={category.label}
+                  type="button"
+                  className={
+                    selectedCategory === category.label
+                      ? "active-interest"
+                      : ""
+                  }
+                  onClick={() =>
+                    setSelectedCategory(category.label)
+                  }
+                >
+                  <span>
+                    {getInterestIcon(category.label)}
+                  </span>
 
-              {categories.map(
-                (category) => (
-                  <button
-                    key={
-                      category.label
-                    }
-                    type="button"
-                    className={
-                      selectedCategory ===
-                      category.label
-                        ? "active-interest"
-                        : ""
-                    }
-                    onClick={() =>
-                      setSelectedCategory(
-                        category.label
-                      )
-                    }
-                  >
-                    <span>
-                      {getInterestIcon(
-                        category.label
-                      )}
-                    </span>
-
-                    {
-                      category.label
-                    }
-                  </button>
-                )
-              )}
-
+                  {category.label}
+                </button>
+              ))}
             </section>
 
             {(searchQuery ||
-              selectedCategory !==
-                "All") && (
-              <div
-                style={{
-                  marginBottom:
-                    "22px",
-                  display: "flex",
-                  justifyContent:
-                    "space-between",
-                  alignItems:
-                    "center",
-                }}
-              >
+              selectedCategory !== "All") && (
+              <div className="student-filter-summary">
                 <strong>
-                  {
-                    filteredEvents.length
-                  }{" "}
-                  event
-                  {filteredEvents.length ===
-                  1
-                    ? ""
-                    : "s"}{" "}
-                  found
+                  {filteredEvents.length} event
+                  {filteredEvents.length === 1 ? "" : "s"} found
                 </strong>
 
                 <button
                   type="button"
-                  onClick={
-                    clearSearch
-                  }
-                  style={{
-                    border: "none",
-                    background:
-                      "transparent",
-                    color:
-                      "#6558f5",
-                    fontWeight:
-                      "700",
-                    cursor:
-                      "pointer",
-                  }}
+                  onClick={clearSearch}
                 >
                   Clear filters
                 </button>
@@ -856,85 +634,75 @@ function StudentDashboard({ user }) {
             )}
 
             {searchMessage && (
-              <p
-                style={{
-                  marginBottom:
-                    "16px",
-                  color: "#706a78",
-                  fontSize: "14px",
-                }}
-              >
+              <p className="student-search-message">
                 {searchMessage}
               </p>
             )}
 
             {loading ? (
-              <p>
-                Loading events...
-              </p>
-            ) : filteredEvents.length ===
-              0 ? (
+              <p>Loading upcoming events...</p>
+            ) : filteredEvents.length === 0 ? (
               <div className="empty-saved-state">
-
                 <div className="empty-saved-icon">
                   🔎
                 </div>
 
                 <h3>
-                  No events found
+                  No upcoming events found
                 </h3>
 
                 <p>
-                  Try another search or
-                  category.
+                  Try another category or search for a different
+                  event.
                 </p>
 
                 <button
                   type="button"
-                  onClick={
-                    clearSearch
-                  }
+                  onClick={clearSearch}
                 >
                   View All Events
                 </button>
-
               </div>
             ) : (
               <>
-
-                {/* TOP */}
-
                 <section className="dashboard-top-grid">
-
                   {featuredEvent && (
-                    <div className="featured-event">
-
-                      <div className="featured-overlay">
-
-                        <span className="featured-small">
-                          DISCOVER SOMETHING
-                          NEW
+                    <article className="feature-gradient-card">
+                      <div className="feature-gradient-header">
+                        <span className="feature-gradient-label">
+                          DISCOVER SOMETHING NEW
                         </span>
 
+                        <div className="feature-gradient-date">
+                          <strong>
+                            {getDay(
+                              featuredEvent.event_date
+                            )}
+                          </strong>
+
+                          <span>
+                            {getMonth(
+                              featuredEvent.event_date
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="feature-gradient-body">
                         <h2>
-                          {
-                            featuredEvent.event_name
-                          }
+                          {featuredEvent.event_name}
                         </h2>
 
                         <p>
-                          {
-                            featuredEvent.description
-                          }
+                          {featuredEvent.description}
                         </p>
 
                         <p>
-                          📍{" "}
-                          {
-                            featuredEvent.location
-                          }
+                          📍 {featuredEvent.location}
                         </p>
+                      </div>
 
+                      <div className="feature-gradient-footer">
                         <button
                           type="button"
                           onClick={() =>
@@ -945,32 +713,12 @@ function StudentDashboard({ user }) {
                         >
                           View Event
                         </button>
-
                       </div>
-
-                      <div className="featured-date">
-                        <strong>
-                          {getDay(
-                            featuredEvent.event_date
-                          )}
-                        </strong>
-
-                        <span>
-                          {getMonth(
-                            featuredEvent.event_date
-                          )}
-                        </span>
-                      </div>
-
-                    </div>
+                    </article>
                   )}
 
-                  {/* PERSONALIZED */}
-
                   <div className="recommended-panel">
-
                     <div className="section-title">
-
                       <h2>
                         Recommended for You
                       </h2>
@@ -978,245 +726,150 @@ function StudentDashboard({ user }) {
                       <button
                         type="button"
                         onClick={() => {
-                          setActiveView(
-                            "for-you"
-                          );
-
+                          setActiveView("for-you");
                           loadRecommendations();
                         }}
                       >
                         View All →
                       </button>
-
                     </div>
 
                     {recommendationLoading ? (
                       <p>
-                        Personalizing your
-                        events...
+                        Personalizing your events...
                       </p>
-                    ) : homepageRecommendations.length ===
-                      0 ? (
+                    ) : homepageRecommendations.length === 0 ? (
                       <p>
-                        Keep exploring events
-                        to improve your
+                        Keep exploring events to improve your
                         recommendations.
                       </p>
                     ) : (
-                      homepageRecommendations.map(
-                        (event) => (
-                          <RecommendedItem
-                            key={
-                              event.event_id
-                            }
-                            event={
-                              event
-                            }
-                            isSaved={savedEventIds.includes(
-                              event.event_id
-                            )}
-                            onBookmark={
-                              toggleBookmark
-                            }
-                            onOpen={
-                              openEventDetails
-                            }
-                          />
-                        )
-                      )
+                      homepageRecommendations.map((event) => (
+                        <RecommendedItem
+                          key={event.event_id}
+                          event={event}
+                          isSaved={savedEventIds.includes(
+                            event.event_id
+                          )}
+                          onBookmark={toggleBookmark}
+                          onOpen={openEventDetails}
+                        />
+                      ))
                     )}
-
                   </div>
                 </section>
 
-                {/* ALL EVENTS */}
-
                 <section className="events-section">
-
                   <div className="section-title">
-
                     <div>
                       <h2>
                         Events for You
                       </h2>
 
                       <p>
-                        Explore upcoming
-                        events across campus.
+                        Explore upcoming events across campus.
                       </p>
                     </div>
-
                   </div>
 
                   <div className="event-card-grid">
-
-                    {filteredEvents.map(
-                      (event) => (
-                        <EventCard
-                          key={
-                            event.event_id
-                          }
-                          event={
-                            event
-                          }
-                          isSaved={savedEventIds.includes(
-                            event.event_id
-                          )}
-                          onBookmark={
-                            toggleBookmark
-                          }
-                          onOpen={
-                            openEventDetails
-                          }
-                        />
-                      )
-                    )}
-
+                    {filteredEvents.map((event) => (
+                      <EventCard
+                        key={event.event_id}
+                        event={event}
+                        isSaved={savedEventIds.includes(
+                          event.event_id
+                        )}
+                        onBookmark={toggleBookmark}
+                        onOpen={openEventDetails}
+                      />
+                    ))}
                   </div>
-
                 </section>
-
               </>
             )}
-
           </>
         )}
 
-        {/* =========================
-            FOR YOU
-        ========================= */}
-
-        {activeView ===
-          "for-you" && (
+        {activeView === "for-you" && (
           <section className="events-section">
-
             <div className="section-title">
-
               <div>
-                <h2>
-                  For You
-                </h2>
+                <h2>For You</h2>
 
                 <p>
-                  Personalized using your
-                  interests and Eventeye
+                  Personalized using your interests and Eventeye
                   activity.
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={
-                  loadRecommendations
-                }
+                onClick={loadRecommendations}
               >
                 Refresh
               </button>
-
             </div>
 
-            <div
-              style={{
-                marginBottom:
-                  "22px",
-                padding:
-                  "14px 16px",
-                background:
-                  "#f7f4ff",
-                borderRadius:
-                  "14px",
-                color:
-                  "#615b69",
-                fontSize:
-                  "13px",
-              }}
-            >
-              {recommendationModel ===
-              "ALS_WRMF"
+            <div className="recommendation-explanation">
+              {recommendationModel === "ALS_WRMF"
                 ? "✨ These recommendations were generated from your Eventeye activity using the behavior-aware ALS/WRMF model."
-                : recommendationType ===
-                  "cold_start"
-                ? "✨ Eventeye is currently using the interests you selected because there is not enough behavioral data yet."
+                : recommendationType === "cold_start"
+                ? "✨ Eventeye is currently using your selected interests while learning your preferences."
                 : "✨ Eventeye is learning your preferences and showing the best available recommendations."}
             </div>
 
             {recommendationLoading ? (
               <p>
-                Loading personalized
-                recommendations...
+                Loading personalized recommendations...
               </p>
-            ) : recommendations.length ===
-              0 ? (
+            ) : upcomingRecommendations.length === 0 ? (
               <div className="empty-saved-state">
-
                 <div className="empty-saved-icon">
                   ✨
                 </div>
 
                 <h3>
-                  No recommendations yet
+                  No upcoming recommendations yet
                 </h3>
 
                 <p>
-                  Browse and interact with
-                  more events to help
-                  Eventeye learn what you
-                  like.
+                  Browse and interact with more events to help
+                  Eventeye learn what you like.
                 </p>
 
                 <button
                   type="button"
                   onClick={() =>
-                    setActiveView(
-                      "home"
-                    )
+                    setActiveView("home")
                   }
                 >
                   Explore Events
                 </button>
-
               </div>
             ) : (
               <div className="event-card-grid">
-
-                {recommendations.map(
-                  (event) => (
-                    <EventCard
-                      key={
-                        event.event_id
-                      }
-                      event={
-                        event
-                      }
-                      isSaved={savedEventIds.includes(
-                        event.event_id
-                      )}
-                      onBookmark={
-                        toggleBookmark
-                      }
-                      onOpen={
-                        openEventDetails
-                      }
-                      recommendationReason={
-                        event.recommendation_reason
-                      }
-                    />
-                  )
-                )}
-
+                {upcomingRecommendations.map((event) => (
+                  <EventCard
+                    key={event.event_id}
+                    event={event}
+                    isSaved={savedEventIds.includes(
+                      event.event_id
+                    )}
+                    onBookmark={toggleBookmark}
+                    onOpen={openEventDetails}
+                    recommendationReason={
+                      event.recommendation_reason
+                    }
+                  />
+                ))}
               </div>
             )}
-
           </section>
         )}
 
-        {/* =========================
-            SAVED
-        ========================= */}
-
         {activeView === "saved" && (
           <section className="events-section">
-
             <div className="section-title">
               <div>
                 <h2>
@@ -1224,16 +877,13 @@ function StudentDashboard({ user }) {
                 </h2>
 
                 <p>
-                  Everything you’ve
-                  bookmarked in one place.
+                  Everything you’ve bookmarked in one place.
                 </p>
               </div>
             </div>
 
-            {savedEvents.length ===
-            0 ? (
+            {savedEvents.length === 0 ? (
               <div className="empty-saved-state">
-
                 <div className="empty-saved-icon">
                   ♡
                 </div>
@@ -1243,56 +893,33 @@ function StudentDashboard({ user }) {
                 </h3>
 
                 <p>
-                  Tap the heart on an event
-                  to save it.
+                  Tap the heart on an event to save it.
                 </p>
 
                 <button
                   type="button"
                   onClick={() =>
-                    setActiveView(
-                      "home"
-                    )
+                    setActiveView("home")
                   }
                 >
                   Explore Events
                 </button>
-
               </div>
             ) : (
               <div className="event-card-grid">
-
-                {savedEvents.map(
-                  (event) => (
-                    <EventCard
-                      key={
-                        event.event_id
-                      }
-                      event={
-                        event
-                      }
-                      isSaved={
-                        true
-                      }
-                      onBookmark={
-                        toggleBookmark
-                      }
-                      onOpen={
-                        openEventDetails
-                      }
-                    />
-                  )
-                )}
-
+                {savedEvents.map((event) => (
+                  <EventCard
+                    key={event.event_id}
+                    event={event}
+                    isSaved={true}
+                    onBookmark={toggleBookmark}
+                    onOpen={openEventDetails}
+                  />
+                ))}
               </div>
             )}
-
           </section>
         )}
-
-        {/* =========================
-            PROFILE
-        ========================= */}
 
         {activeView === "profile" && (
           <StudentProfile
@@ -1305,16 +932,10 @@ function StudentDashboard({ user }) {
             }
           />
         )}
-
       </main>
     </div>
   );
 }
-
-
-/* =========================
-   RECOMMENDED ITEM
-========================= */
 
 function RecommendedItem({
   event,
@@ -1328,11 +949,7 @@ function RecommendedItem({
       onClick={() =>
         onOpen(event.event_id)
       }
-      style={{
-        cursor: "pointer",
-      }}
     >
-
       <div className="recommended-icon">
         {getCategoryIcon(
           event.category_name
@@ -1340,32 +957,21 @@ function RecommendedItem({
       </div>
 
       <div className="recommended-info">
-
         <h3>
           {event.event_name}
         </h3>
 
         <p>
-          {formatDate(
-            event.event_date
-          )}
+          {formatDate(event.event_date)}
           {" · "}
           {event.location}
         </p>
 
         {event.recommendation_reason && (
-          <small
-            style={{
-              color: "#6558f5",
-              fontWeight: "600",
-            }}
-          >
-            {
-              event.recommendation_reason
-            }
+          <small className="recommendation-reason">
+            {event.recommendation_reason}
           </small>
         )}
-
       </div>
 
       <button
@@ -1379,19 +985,11 @@ function RecommendedItem({
           );
         }}
       >
-        {isSaved
-          ? "♥"
-          : "♡"}
+        {isSaved ? "♥" : "♡"}
       </button>
-
     </div>
   );
 }
-
-
-/* =========================
-   EVENT CARD
-========================= */
 
 function EventCard({
   event,
@@ -1406,13 +1004,8 @@ function EventCard({
       onClick={() =>
         onOpen(event.event_id)
       }
-      style={{
-        cursor: "pointer",
-      }}
     >
-
       <div className="event-image-placeholder">
-
         <span>
           {getCategoryIcon(
             event.category_name
@@ -1431,11 +1024,9 @@ function EventCard({
         >
           {isSaved ? "♥" : "♡"}
         </button>
-
       </div>
 
       <div className="event-card-content">
-
         <span className="event-category">
           {event.category_name}
         </span>
@@ -1456,134 +1047,13 @@ function EventCard({
         </p>
 
         {recommendationReason && (
-          <p
-            style={{
-              marginTop: "10px",
-              color: "#6558f5",
-              fontSize: "12px",
-              fontWeight: "600",
-            }}
-          >
+          <p className="event-recommendation-reason">
             ✨ {recommendationReason}
           </p>
         )}
-
       </div>
     </div>
   );
 }
-
-
-/* =========================
-   HELPERS
-========================= */
-
-function formatDate(date) {
-  if (!date) return "";
-
-  return new Date(
-    date
-  ).toLocaleDateString(
-    "en-GB",
-    {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }
-  );
-}
-
-
-function getDay(date) {
-  if (!date) return "";
-
-  return new Date(
-    date
-  ).toLocaleDateString(
-    "en-GB",
-    {
-      day: "2-digit",
-    }
-  );
-}
-
-
-function getMonth(date) {
-  if (!date) return "";
-
-  return new Date(date)
-    .toLocaleDateString(
-      "en-GB",
-      {
-        month: "short",
-      }
-    )
-    .toUpperCase();
-}
-
-
-function getCategoryIcon(
-  category
-) {
-  const icons = {
-    "Social & Entertainment":
-      "🎉",
-
-    "Sports & Fitness":
-      "🏀",
-
-    "Academic & Educational":
-      "📚",
-
-    "Career & Professional":
-      "💼",
-
-    "Arts & Culture":
-      "🎨",
-
-    "Technology & Innovation":
-      "💻",
-
-    "Clubs & Societies":
-      "👥",
-
-    "Wellness & Lifestyle":
-      "🌿",
-
-    "Community & Volunteering":
-      "🤝",
-
-    "Faith & Spirituality":
-      "✨",
-  };
-
-  return (
-    icons[category] || "📅"
-  );
-}
-
-
-function getInterestIcon(
-  interest
-) {
-  const icons = {
-    All: "✨",
-    Social: "🎉",
-    Sports: "🏀",
-    Academic: "📚",
-    Career: "💼",
-    Arts: "🎨",
-    Technology: "💻",
-    Clubs: "👥",
-    Wellness: "🌿",
-    Community: "🤝",
-    Faith: "⭐",
-  };
-
-  return (
-    icons[interest] || "✨"
-  );
-}
-
 
 export default StudentDashboard;
