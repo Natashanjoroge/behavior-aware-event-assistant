@@ -329,55 +329,6 @@
   cursor: pointer;
 }
 
-.divider {
-  display: flex;
-  align-items: center;
-
-  gap: 12px;
-
-  margin: 22px 0;
-
-  color: #9ca3af;
-}
-
-.divider span {
-  flex: 1;
-
-  height: 1px;
-
-  background: #e5e7eb;
-}
-
-.divider p {
-  margin: 0;
-}
-
-.social-button {
-  width: 100%;
-
-  padding: 13px;
-
-  margin-bottom: 10px;
-
-  border: 1px solid #dfe3eb;
-  border-radius: 10px;
-
-  background: white;
-
-  font-weight: 600;
-
-  color: #2b3240;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-.social-button:hover {
-  background: #f8f9fc;
-  border-color: #cfd4df;
-}
-
 .role-options {
   display: flex;
 
@@ -739,115 +690,6 @@
 
 
 /* =========================================================
-   LOGIN DIVIDER
-========================================================= */
-
-.login-divider {
-  margin: 28px 0;
-
-  display: flex;
-  align-items: center;
-
-  gap: 15px;
-}
-
-.login-divider span {
-  flex: 1;
-
-  height: 1px;
-
-  background: #e5e7ed;
-}
-
-.login-divider p {
-  margin: 0;
-
-  color: #888c99;
-
-  font-size: 13px;
-}
-
-
-/* =========================================================
-   SOCIAL LOGIN
-========================================================= */
-
-.social-login-row {
-  display: grid;
-
-  grid-template-columns: 1fr 1fr;
-
-  gap: 12px;
-}
-
-.login-social-button {
-  min-height: 53px;
-
-  border: 1px solid #dfe1e8;
-  border-radius: 11px;
-
-  background: white;
-
-  color: #343849;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 10px;
-
-  font-weight: 600;
-  font-size: 13px;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-.login-social-button:hover {
-  background: #fafaff;
-
-  border-color: #c8c3ff;
-
-  transform: translateY(-1px);
-}
-
-.google-letter {
-  font-size: 18px;
-  font-weight: 900;
-
-  color: #4285f4;
-}
-
-.microsoft-icon {
-  width: 18px;
-  height: 18px;
-
-  display: grid;
-
-  grid-template-columns: repeat(2, 1fr);
-
-  gap: 2px;
-}
-
-.microsoft-icon span:nth-child(1) {
-  background: #f25022;
-}
-
-.microsoft-icon span:nth-child(2) {
-  background: #7fba00;
-}
-
-.microsoft-icon span:nth-child(3) {
-  background: #00a4ef;
-}
-
-.microsoft-icon span:nth-child(4) {
-  background: #ffb900;
-}
-
-
-/* =========================================================
    SIGN UP LINK
 ========================================================= */
 
@@ -1098,10 +940,6 @@
     margin-bottom: 32px;
   }
 
-  .social-login-row {
-    grid-template-columns: 1fr;
-  }
-
   .login-options {
     align-items: flex-start;
 
@@ -1120,6 +958,8 @@
     padding: 40px 28px;
   }
 }
+
+
 /* =========================================================
    REGISTER - SINGLE CENTERED LAYOUT
 ========================================================= */
@@ -1207,7 +1047,9 @@
 }
 
 
-/* FORM */
+/* =========================================================
+   REGISTER FORM
+========================================================= */
 
 .register-form {
   display: flex;
@@ -1285,7 +1127,9 @@
 }
 
 
-/* PASSWORD TOGGLE */
+/* =========================================================
+   REGISTER PASSWORD TOGGLE
+========================================================= */
 
 .register-password-toggle {
   position: absolute;
@@ -1317,7 +1161,9 @@
 }
 
 
-/* ACCOUNT TYPE */
+/* =========================================================
+   ACCOUNT TYPE
+========================================================= */
 
 .register-role-options {
   display: grid;
@@ -1398,7 +1244,9 @@
 }
 
 
-/* CREATE ACCOUNT BUTTON */
+/* =========================================================
+   CREATE ACCOUNT BUTTON
+========================================================= */
 
 .register-main-button {
   width: 100%;
@@ -1435,77 +1283,9 @@
 }
 
 
-/* DIVIDER */
-
-.register-divider {
-  margin: 25px 0;
-
-  display: flex;
-  align-items: center;
-
-  gap: 14px;
-}
-
-.register-divider span {
-  flex: 1;
-
-  height: 1px;
-
-  background: #e6e7ed;
-}
-
-.register-divider p {
-  margin: 0;
-
-  color: #8b8f9b;
-
-  font-size: 13px;
-}
-
-
-/* SOCIAL BUTTONS */
-
-.register-social-row {
-  display: grid;
-
-  grid-template-columns: 1fr 1fr;
-
-  gap: 12px;
-}
-
-.register-social-button {
-  min-height: 50px;
-
-  border: 1px solid #dfe1e8;
-  border-radius: 10px;
-
-  background: white;
-
-  color: #353949;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 9px;
-
-  font-size: 13px;
-
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-.register-social-button:hover {
-  border-color: #c7c1ff;
-
-  background: #fafaff;
-}
-
-
-/* LOGIN LINK */
+/* =========================================================
+   LOGIN LINK
+========================================================= */
 
 .register-login-text {
   margin: 27px 0 0;
@@ -1534,7 +1314,9 @@
 }
 
 
-/* MOBILE */
+/* =========================================================
+   REGISTER MOBILE
+========================================================= */
 
 @media (max-width: 650px) {
   .register-card {
@@ -1548,10 +1330,6 @@
   }
 
   .register-role-options {
-    grid-template-columns: 1fr;
-  }
-
-  .register-social-row {
     grid-template-columns: 1fr;
   }
 }

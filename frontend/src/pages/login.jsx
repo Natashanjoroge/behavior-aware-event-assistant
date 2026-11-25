@@ -174,38 +174,6 @@ function Login({ onSwitch, onLogin }) {
             </div>
           )}
 
-          <div className="login-divider">
-            <span></span>
-            <p>or continue with</p>
-            <span></span>
-          </div>
-
-          <div className="social-login-row">
-            <button
-              type="button"
-              className="login-social-button"
-            >
-              <span className="google-letter">
-                G
-              </span>
-              Continue with Google
-            </button>
-
-            <button
-              type="button"
-              className="login-social-button"
-            >
-              <span className="microsoft-icon">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-              </span>
-
-              Continue with Microsoft
-            </button>
-          </div>
-
           <p className="login-switch-text">
             Don&apos;t have an account?{" "}
 

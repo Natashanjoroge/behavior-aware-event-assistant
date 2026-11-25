@@ -5,7 +5,7 @@ import OrganizerAnalytics from "./organizerAnalytics";
 import OrganizerProfile from "./organizerProfile";
 import "../styles/organizerDashboard.css";
 
-function OrganizerDashboard({ user }) {
+function OrganizerDashboard({ user, onLogout }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState("dashboard");
@@ -20,17 +20,22 @@ function OrganizerDashboard({ user }) {
   const [actionType, setActionType] = useState("");
 
   const [savingEdit, setSavingEdit] = useState(false);
-  const [cancellingEventId, setCancellingEventId] = useState(null);
+  const [cancellingEventId, setCancellingEventId] =
+    useState(null);
 
   const [checkInEventId, setCheckInEventId] = useState("");
   const [ticketCode, setTicketCode] = useState("");
   const [verifiedTicket, setVerifiedTicket] = useState(null);
 
   const [checkInMessage, setCheckInMessage] = useState("");
-  const [checkInMessageType, setCheckInMessageType] = useState("");
+  const [checkInMessageType, setCheckInMessageType] =
+    useState("");
 
-  const [verifyingTicket, setVerifyingTicket] = useState(false);
-  const [checkingInTicket, setCheckingInTicket] = useState(false);
+  const [verifyingTicket, setVerifyingTicket] =
+    useState(false);
+
+  const [checkingInTicket, setCheckingInTicket] =
+    useState(false);
 
   const [checkInList, setCheckInList] = useState([]);
 
@@ -40,19 +45,27 @@ function OrganizerDashboard({ user }) {
     remaining: 0,
   });
 
-  const [loadingCheckIns, setLoadingCheckIns] = useState(false);
+  const [loadingCheckIns, setLoadingCheckIns] =
+    useState(false);
 
   const todayDateTime = useMemo(() => {
     const now = new Date();
 
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
+
+    const month = String(
+      now.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+      now.getDate()
+    ).padStart(2, "0");
 
     return `${year}-${month}-${day}T00:00`;
   }, []);
 
-  const todayDate = todayDateTime.split("T")[0];
+  const todayDate =
+    todayDateTime.split("T")[0];
 
   const loadEvents = async () => {
     if (!user?.user_id) {
@@ -72,10 +85,16 @@ function OrganizerDashboard({ user }) {
       if (response.ok) {
         setEvents(data);
       } else {
-        console.error("Could not load organizer events:", data);
+        console.error(
+          "Could not load organizer events:",
+          data
+        );
       }
     } catch (error) {
-      console.error("Could not connect to organizer events API:", error);
+      console.error(
+        "Could not connect to organizer events API:",
+        error
+      );
     } finally {
       setLoading(false);
     }
@@ -86,7 +105,10 @@ function OrganizerDashboard({ user }) {
   }, [user]);
 
   const loadEventCheckIns = async () => {
-    if (!checkInEventId || !user?.user_id) {
+    if (
+      !checkInEventId ||
+      !user?.user_id
+    ) {
       setCheckInList([]);
 
       setCheckInSummary({
@@ -108,7 +130,10 @@ function OrganizerDashboard({ user }) {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error("Could not load check-ins:", data);
+        console.error(
+          "Could not load check-ins:",
+          data
+        );
 
         setCheckInList([]);
 
@@ -121,7 +146,9 @@ function OrganizerDashboard({ user }) {
         return;
       }
 
-      setCheckInList(data.attendees || []);
+      setCheckInList(
+        data.attendees || []
+      );
 
       setCheckInSummary(
         data.summary || {
@@ -131,65 +158,122 @@ function OrganizerDashboard({ user }) {
         }
       );
     } catch (error) {
-      console.error("Check-in list loading error:", error);
+      console.error(
+        "Check-in list loading error:",
+        error
+      );
     } finally {
       setLoadingCheckIns(false);
     }
   };
 
   useEffect(() => {
-    if (activeView === "check-in" && checkInEventId) {
+    if (
+      activeView === "check-in" &&
+      checkInEventId
+    ) {
       loadEventCheckIns();
     }
-  }, [activeView, checkInEventId, user]);
+  }, [
+    activeView,
+    checkInEventId,
+    user,
+  ]);
 
   const managedEvents = useMemo(() => {
-    const query = manageSearch.trim().toLowerCase();
+    const query =
+      manageSearch
+        .trim()
+        .toLowerCase();
 
-    return events.filter((event) => {
-      const eventDate = event.event_date
-        ? new Date(event.event_date)
-        : null;
+    return events.filter(
+      (event) => {
+        const eventDate =
+          event.event_date
+            ? new Date(
+                event.event_date
+              )
+            : null;
 
-      let matchesFilter = true;
+        let matchesFilter = true;
 
-      if (manageFilter === "upcoming") {
-        matchesFilter =
-          eventDate &&
-          eventDate >= new Date() &&
-          event.status !== "cancelled";
+        if (
+          manageFilter ===
+          "upcoming"
+        ) {
+          matchesFilter =
+            eventDate &&
+            eventDate >=
+              new Date() &&
+            event.status !==
+              "cancelled";
+        }
+
+        if (
+          manageFilter === "past"
+        ) {
+          matchesFilter =
+            eventDate &&
+            eventDate <
+              new Date() &&
+            event.status !==
+              "cancelled";
+        }
+
+        if (
+          manageFilter ===
+          "cancelled"
+        ) {
+          matchesFilter =
+            event.status ===
+            "cancelled";
+        }
+
+        const matchesSearch =
+          !query ||
+          event.event_name
+            ?.toLowerCase()
+            .includes(query) ||
+          event.description
+            ?.toLowerCase()
+            .includes(query) ||
+          event.location
+            ?.toLowerCase()
+            .includes(query) ||
+          event.category_name
+            ?.toLowerCase()
+            .includes(query);
+
+        return (
+          matchesFilter &&
+          matchesSearch
+        );
       }
+    );
+  }, [
+    events,
+    manageSearch,
+    manageFilter,
+  ]);
 
-      if (manageFilter === "past") {
-        matchesFilter =
-          eventDate &&
-          eventDate < new Date() &&
-          event.status !== "cancelled";
-      }
-
-      if (manageFilter === "cancelled") {
-        matchesFilter = event.status === "cancelled";
-      }
-
-      const matchesSearch =
-        !query ||
-        event.event_name?.toLowerCase().includes(query) ||
-        event.description?.toLowerCase().includes(query) ||
-        event.location?.toLowerCase().includes(query) ||
-        event.category_name?.toLowerCase().includes(query);
-
-      return matchesFilter && matchesSearch;
-    });
-  }, [events, manageSearch, manageFilter]);
-
-  if (activeView === "create-event") {
+  if (
+    activeView ===
+    "create-event"
+  ) {
     return (
       <CreateEvent
         user={user}
-        onBack={() => setActiveView("dashboard")}
+        onBack={() =>
+          setActiveView(
+            "dashboard"
+          )
+        }
         onEventCreated={() => {
           loadEvents();
-          setActiveView("dashboard");
+
+          setActiveView(
+            "dashboard"
+          );
         }}
       />
     );
@@ -197,418 +281,739 @@ function OrganizerDashboard({ user }) {
 
   const now = new Date();
 
-  const allUpcomingEvents = events.filter(
-    (event) =>
-      event.event_date &&
-      new Date(event.event_date) >= now &&
-      event.status !== "cancelled"
-  );
+  const allUpcomingEvents =
+    events.filter(
+      (event) =>
+        event.event_date &&
+        new Date(
+          event.event_date
+        ) >= now &&
+        event.status !==
+          "cancelled"
+    );
 
-  const upcomingEvents = [...allUpcomingEvents]
-    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
+  const upcomingEvents = [
+    ...allUpcomingEvents,
+  ]
+    .sort(
+      (a, b) =>
+        new Date(a.event_date) -
+        new Date(b.event_date)
+    )
     .slice(0, 4);
 
-  const pastEvents = events.filter(
-    (event) =>
-      event.event_date &&
-      new Date(event.event_date) < now &&
-      event.status !== "cancelled"
-  );
+  const pastEvents =
+    events.filter(
+      (event) =>
+        event.event_date &&
+        new Date(
+          event.event_date
+        ) < now &&
+        event.status !==
+          "cancelled"
+    );
 
-  const cancelledEvents = events.filter(
-    (event) => event.status === "cancelled"
-  );
+  const cancelledEvents =
+    events.filter(
+      (event) =>
+        event.status ===
+        "cancelled"
+    );
 
-  const totalEvents = events.length;
+  const totalEvents =
+    events.length;
 
-  const handleViewEvent = (event) => {
+  const handleViewEvent = (
+    event
+  ) => {
     setSelectedEvent(event);
     setEditingEvent(null);
     setActionMessage("");
   };
 
-  const handleStartEdit = (event) => {
+  const handleStartEdit = (
+    event
+  ) => {
     setSelectedEvent(null);
 
     setEditingEvent({
       ...event,
-      event_date: toDateTimeLocal(event.event_date),
-      end_date: toDateTimeLocal(event.end_date),
-      capacity: event.capacity || "",
+      event_date:
+        toDateTimeLocal(
+          event.event_date
+        ),
+      end_date:
+        toDateTimeLocal(
+          event.end_date
+        ),
+      capacity:
+        event.capacity || "",
     });
 
     setActionMessage("");
     setActionType("");
   };
 
-  const handleEditChange = (changeEvent) => {
-    const { name, value } = changeEvent.target;
+  const handleEditChange = (
+    changeEvent
+  ) => {
+    const {
+      name,
+      value,
+    } = changeEvent.target;
 
-    setEditingEvent((current) => ({
-      ...current,
-      [name]: value,
-    }));
-  };
-
-  const handleSaveEdit = async (submitEvent) => {
-    submitEvent.preventDefault();
-
-    if (!editingEvent) {
-      return;
-    }
-
-    setActionMessage("");
-    setActionType("");
-
-    if (!editingEvent.event_name?.trim()) {
-      setActionMessage("Event name is required.");
-      setActionType("error");
-      return;
-    }
-
-    if (!editingEvent.description?.trim()) {
-      setActionMessage("Description is required.");
-      setActionType("error");
-      return;
-    }
-
-    if (!editingEvent.location?.trim()) {
-      setActionMessage("Location is required.");
-      setActionType("error");
-      return;
-    }
-
-    if (!editingEvent.event_date) {
-      setActionMessage("Event start date is required.");
-      setActionType("error");
-      return;
-    }
-
-    const startDateString = editingEvent.event_date.split("T")[0];
-
-    if (startDateString < todayDate) {
-      setActionMessage("The event date cannot be before today's date.");
-      setActionType("error");
-      return;
-    }
-
-    const startDate = new Date(editingEvent.event_date);
-
-    if (Number.isNaN(startDate.getTime())) {
-      setActionMessage("The event start date is invalid.");
-      setActionType("error");
-      return;
-    }
-
-    if (editingEvent.end_date) {
-      const endDate = new Date(editingEvent.end_date);
-
-      if (Number.isNaN(endDate.getTime())) {
-        setActionMessage("The event end date is invalid.");
-        setActionType("error");
-        return;
-      }
-
-      if (endDate <= startDate) {
-        setActionMessage(
-          "The event end time must be after the start time."
-        );
-        setActionType("error");
-        return;
-      }
-    }
-
-    if (editingEvent.capacity && Number(editingEvent.capacity) < 1) {
-      setActionMessage("Capacity must be at least 1.");
-      setActionType("error");
-      return;
-    }
-
-    setSavingEdit(true);
-
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/api/events/${editingEvent.event_id}`,
-        {
-          method: "PUT",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            organizer_id: Number(user.user_id),
-            event_name: editingEvent.event_name.trim(),
-            description: editingEvent.description.trim(),
-            location: editingEvent.location.trim(),
-            event_date: editingEvent.event_date,
-            end_date: editingEvent.end_date || null,
-            capacity: editingEvent.capacity
-              ? Number(editingEvent.capacity)
-              : null,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setActionMessage(data.message || "Could not update the event.");
-        setActionType("error");
-        return;
-      }
-
-      setActionMessage("Event updated successfully.");
-      setActionType("success");
-      setEditingEvent(null);
-
-      await loadEvents();
-    } catch (error) {
-      console.error("Update event request failed:", error);
-
-      setActionMessage("Could not connect to the Eventeye server.");
-      setActionType("error");
-    } finally {
-      setSavingEdit(false);
-    }
-  };
-
-  const handleCancelEvent = async (event) => {
-    const confirmed = window.confirm(
-      `Cancel "${event.event_name}"? Students will no longer be able to book this event.`
+    setEditingEvent(
+      (current) => ({
+        ...current,
+        [name]: value,
+      })
     );
+  };
 
-    if (!confirmed) {
-      return;
-    }
+  const handleSaveEdit =
+    async (submitEvent) => {
+      submitEvent.preventDefault();
 
-    setCancellingEventId(event.event_id);
-    setActionMessage("");
-    setActionType("");
+      if (!editingEvent) {
+        return;
+      }
 
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/api/events/${event.event_id}/cancel`,
-        {
-          method: "PUT",
+      setActionMessage("");
+      setActionType("");
 
-          headers: {
-            "Content-Type": "application/json",
-          },
+      if (
+        !editingEvent.event_name?.trim()
+      ) {
+        setActionMessage(
+          "Event name is required."
+        );
 
-          body: JSON.stringify({
-            organizer_id: Number(user.user_id),
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setActionMessage(data.message || "Could not cancel the event.");
         setActionType("error");
         return;
       }
 
-      setActionMessage("Event cancelled successfully.");
-      setActionType("success");
-
-      setSelectedEvent(null);
-      setEditingEvent(null);
-
-      await loadEvents();
-    } catch (error) {
-      console.error("Cancel event request failed:", error);
-
-      setActionMessage("Could not connect to the Eventeye server.");
-      setActionType("error");
-    } finally {
-      setCancellingEventId(null);
-    }
-  };
-
-  const handleCheckInEventChange = (event) => {
-    setCheckInEventId(event.target.value);
-    setTicketCode("");
-    setVerifiedTicket(null);
-    setCheckInMessage("");
-    setCheckInMessageType("");
-  };
-
-  const handleVerifyTicket = async (event) => {
-    event.preventDefault();
-
-    const cleanedTicket = ticketCode.trim().toUpperCase();
-
-    setVerifiedTicket(null);
-    setCheckInMessage("");
-    setCheckInMessageType("");
-
-    if (!checkInEventId) {
-      setCheckInMessage("Please select an event first.");
-      setCheckInMessageType("error");
-      return;
-    }
-
-    if (!cleanedTicket) {
-      setCheckInMessage("Please enter a ticket code.");
-      setCheckInMessageType("error");
-      return;
-    }
-
-    setVerifyingTicket(true);
-
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/api/tickets/verify/${encodeURIComponent(
-          cleanedTicket
-        )}`
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setCheckInMessage(
-          data.message || "Ticket could not be verified."
+      if (
+        !editingEvent.description?.trim()
+      ) {
+        setActionMessage(
+          "Description is required."
         );
-        setCheckInMessageType("error");
+
+        setActionType("error");
         return;
       }
 
-      if (Number(data.event?.event_id) !== Number(checkInEventId)) {
-        setCheckInMessage(
-          `This ticket belongs to "${data.event?.event_name}", not the selected event.`
+      if (
+        !editingEvent.location?.trim()
+      ) {
+        setActionMessage(
+          "Location is required."
         );
-        setCheckInMessageType("error");
+
+        setActionType("error");
         return;
       }
 
-      setVerifiedTicket(data);
-
-      if (data.valid) {
-        setCheckInMessage("Ticket verified successfully.");
-        setCheckInMessageType("success");
-      } else {
-        setCheckInMessage(
-          data.message || "This ticket cannot be checked in."
+      if (
+        !editingEvent.event_date
+      ) {
+        setActionMessage(
+          "Event start date is required."
         );
-        setCheckInMessageType("error");
+
+        setActionType("error");
+        return;
       }
-    } catch (error) {
-      console.error("Ticket verification failed:", error);
 
-      setCheckInMessage("Could not connect to the Eventeye server.");
-      setCheckInMessageType("error");
-    } finally {
-      setVerifyingTicket(false);
-    }
-  };
+      const startDateString =
+        editingEvent.event_date.split(
+          "T"
+        )[0];
 
-  const handleCheckInTicket = async () => {
-    if (
-      !verifiedTicket?.valid ||
-      !verifiedTicket?.ticket?.ticket_code
-    ) {
-      return;
-    }
+      if (
+        startDateString <
+        todayDate
+      ) {
+        setActionMessage(
+          "The event date cannot be before today's date."
+        );
 
-    setCheckingInTicket(true);
-    setCheckInMessage("");
-    setCheckInMessageType("");
+        setActionType("error");
+        return;
+      }
 
-    try {
-      const response = await fetch(
-        "http://127.0.0.1:5000/api/tickets/check-in",
-        {
-          method: "POST",
+      const startDate =
+        new Date(
+          editingEvent.event_date
+        );
 
-          headers: {
-            "Content-Type": "application/json",
-          },
+      if (
+        Number.isNaN(
+          startDate.getTime()
+        )
+      ) {
+        setActionMessage(
+          "The event start date is invalid."
+        );
 
-          body: JSON.stringify({
-            ticket_code: verifiedTicket.ticket.ticket_code,
-            organizer_id: Number(user.user_id),
-          }),
+        setActionType("error");
+        return;
+      }
+
+      if (
+        editingEvent.end_date
+      ) {
+        const endDate =
+          new Date(
+            editingEvent.end_date
+          );
+
+        if (
+          Number.isNaN(
+            endDate.getTime()
+          )
+        ) {
+          setActionMessage(
+            "The event end date is invalid."
+          );
+
+          setActionType("error");
+          return;
         }
-      );
 
-      const data = await response.json();
+        if (
+          endDate <=
+          startDate
+        ) {
+          setActionMessage(
+            "The event end time must be after the start time."
+          );
 
-      if (!response.ok) {
-        setCheckInMessage(
-          data.message || "Could not check in this ticket."
+          setActionType("error");
+          return;
+        }
+      }
+
+      if (
+        editingEvent.capacity &&
+        Number(
+          editingEvent.capacity
+        ) < 1
+      ) {
+        setActionMessage(
+          "Capacity must be at least 1."
         );
-        setCheckInMessageType("error");
+
+        setActionType("error");
         return;
       }
 
-      setVerifiedTicket({
-        valid: false,
-        ticket: data.ticket,
-        booking: data.booking,
-        student: data.student,
-        event: data.event,
-        message: "Student checked in successfully.",
-      });
+      setSavingEdit(true);
 
-      setCheckInMessage(
-        `${data.student?.full_name || "Student"} checked in successfully.`
+      try {
+        const response =
+          await fetch(
+            `http://127.0.0.1:5000/api/events/${editingEvent.event_id}`,
+            {
+              method: "PUT",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify(
+                {
+                  organizer_id:
+                    Number(
+                      user.user_id
+                    ),
+
+                  event_name:
+                    editingEvent.event_name.trim(),
+
+                  description:
+                    editingEvent.description.trim(),
+
+                  location:
+                    editingEvent.location.trim(),
+
+                  event_date:
+                    editingEvent.event_date,
+
+                  end_date:
+                    editingEvent.end_date ||
+                    null,
+
+                  capacity:
+                    editingEvent.capacity
+                      ? Number(
+                          editingEvent.capacity
+                        )
+                      : null,
+                }
+              ),
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          setActionMessage(
+            data.message ||
+              "Could not update the event."
+          );
+
+          setActionType(
+            "error"
+          );
+
+          return;
+        }
+
+        setActionMessage(
+          "Event updated successfully."
+        );
+
+        setActionType(
+          "success"
+        );
+
+        setEditingEvent(null);
+
+        await loadEvents();
+      } catch (error) {
+        console.error(
+          "Update event request failed:",
+          error
+        );
+
+        setActionMessage(
+          "Could not connect to the Eventeye server."
+        );
+
+        setActionType(
+          "error"
+        );
+      } finally {
+        setSavingEdit(false);
+      }
+    };
+
+  const handleCancelEvent =
+    async (event) => {
+      const confirmed =
+        window.confirm(
+          `Cancel "${event.event_name}"? Students will no longer be able to book this event.`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      setCancellingEventId(
+        event.event_id
       );
 
-      setCheckInMessageType("success");
+      setActionMessage("");
+      setActionType("");
+
+      try {
+        const response =
+          await fetch(
+            `http://127.0.0.1:5000/api/events/${event.event_id}/cancel`,
+            {
+              method: "PUT",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify(
+                {
+                  organizer_id:
+                    Number(
+                      user.user_id
+                    ),
+                }
+              ),
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          setActionMessage(
+            data.message ||
+              "Could not cancel the event."
+          );
+
+          setActionType(
+            "error"
+          );
+
+          return;
+        }
+
+        setActionMessage(
+          "Event cancelled successfully."
+        );
+
+        setActionType(
+          "success"
+        );
+
+        setSelectedEvent(null);
+        setEditingEvent(null);
+
+        await loadEvents();
+      } catch (error) {
+        console.error(
+          "Cancel event request failed:",
+          error
+        );
+
+        setActionMessage(
+          "Could not connect to the Eventeye server."
+        );
+
+        setActionType(
+          "error"
+        );
+      } finally {
+        setCancellingEventId(
+          null
+        );
+      }
+    };
+
+  const handleCheckInEventChange =
+    (event) => {
+      setCheckInEventId(
+        event.target.value
+      );
+
       setTicketCode("");
+      setVerifiedTicket(null);
+      setCheckInMessage("");
+      setCheckInMessageType("");
+    };
 
-      await loadEventCheckIns();
-    } catch (error) {
-      console.error("Ticket check-in failed:", error);
+  const handleVerifyTicket =
+    async (event) => {
+      event.preventDefault();
 
-      setCheckInMessage("Could not connect to the Eventeye server.");
-      setCheckInMessageType("error");
-    } finally {
-      setCheckingInTicket(false);
-    }
-  };
+      const cleanedTicket =
+        ticketCode
+          .trim()
+          .toUpperCase();
+
+      setVerifiedTicket(null);
+      setCheckInMessage("");
+      setCheckInMessageType("");
+
+      if (!checkInEventId) {
+        setCheckInMessage(
+          "Please select an event first."
+        );
+
+        setCheckInMessageType(
+          "error"
+        );
+
+        return;
+      }
+
+      if (!cleanedTicket) {
+        setCheckInMessage(
+          "Please enter a ticket code."
+        );
+
+        setCheckInMessageType(
+          "error"
+        );
+
+        return;
+      }
+
+      setVerifyingTicket(true);
+
+      try {
+        const response =
+          await fetch(
+            `http://127.0.0.1:5000/api/tickets/verify/${encodeURIComponent(
+              cleanedTicket
+            )}`
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          setCheckInMessage(
+            data.message ||
+              "Ticket could not be verified."
+          );
+
+          setCheckInMessageType(
+            "error"
+          );
+
+          return;
+        }
+
+        if (
+          Number(
+            data.event
+              ?.event_id
+          ) !==
+          Number(
+            checkInEventId
+          )
+        ) {
+          setCheckInMessage(
+            `This ticket belongs to "${data.event?.event_name}", not the selected event.`
+          );
+
+          setCheckInMessageType(
+            "error"
+          );
+
+          return;
+        }
+
+        setVerifiedTicket(data);
+
+        if (data.valid) {
+          setCheckInMessage(
+            "Ticket verified successfully."
+          );
+
+          setCheckInMessageType(
+            "success"
+          );
+        } else {
+          setCheckInMessage(
+            data.message ||
+              "This ticket cannot be checked in."
+          );
+
+          setCheckInMessageType(
+            "error"
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Ticket verification failed:",
+          error
+        );
+
+        setCheckInMessage(
+          "Could not connect to the Eventeye server."
+        );
+
+        setCheckInMessageType(
+          "error"
+        );
+      } finally {
+        setVerifyingTicket(
+          false
+        );
+      }
+    };
+
+  const handleCheckInTicket =
+    async () => {
+      if (
+        !verifiedTicket?.valid ||
+        !verifiedTicket?.ticket
+          ?.ticket_code
+      ) {
+        return;
+      }
+
+      setCheckingInTicket(true);
+      setCheckInMessage("");
+      setCheckInMessageType("");
+
+      try {
+        const response =
+          await fetch(
+            "http://127.0.0.1:5000/api/tickets/check-in",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify(
+                {
+                  ticket_code:
+                    verifiedTicket
+                      .ticket
+                      .ticket_code,
+
+                  organizer_id:
+                    Number(
+                      user.user_id
+                    ),
+                }
+              ),
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          setCheckInMessage(
+            data.message ||
+              "Could not check in this ticket."
+          );
+
+          setCheckInMessageType(
+            "error"
+          );
+
+          return;
+        }
+
+        setVerifiedTicket({
+          valid: false,
+          ticket: data.ticket,
+          booking: data.booking,
+          student: data.student,
+          event: data.event,
+          message:
+            "Student checked in successfully.",
+        });
+
+        setCheckInMessage(
+          `${
+            data.student
+              ?.full_name ||
+            "Student"
+          } checked in successfully.`
+        );
+
+        setCheckInMessageType(
+          "success"
+        );
+
+        setTicketCode("");
+
+        await loadEventCheckIns();
+      } catch (error) {
+        console.error(
+          "Ticket check-in failed:",
+          error
+        );
+
+        setCheckInMessage(
+          "Could not connect to the Eventeye server."
+        );
+
+        setCheckInMessageType(
+          "error"
+        );
+      } finally {
+        setCheckingInTicket(
+          false
+        );
+      }
+    };
 
   return (
     <div className="organizer-layout">
+
       <aside className="organizer-sidebar">
+
         <Logo compact />
 
         <div className="organizer-account">
+
           <div className="organizer-avatar">
-            {user?.full_name?.charAt(0) || "O"}
+            {user?.full_name?.charAt(
+              0
+            ) || "O"}
           </div>
 
           <div>
-            <strong>{user?.full_name || "Organizer"}</strong>
-            <span>Event Organizer</span>
+            <strong>
+              {user?.full_name ||
+                "Organizer"}
+            </strong>
+
+            <span>
+              Event Organizer
+            </span>
           </div>
+
         </div>
 
         <nav className="organizer-nav">
+
           <button
-            className={activeView === "dashboard" ? "active" : ""}
-            onClick={() => setActiveView("dashboard")}
+            className={
+              activeView ===
+              "dashboard"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setActiveView(
+                "dashboard"
+              )
+            }
           >
             Dashboard
           </button>
 
           <button
-            className={activeView === "create-event" ? "active" : ""}
-            onClick={() => setActiveView("create-event")}
+            className={
+              activeView ===
+              "create-event"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setActiveView(
+                "create-event"
+              )
+            }
           >
             Create Event
           </button>
 
           <button
             type="button"
-            className={activeView === "manage-events" ? "active" : ""}
+            className={
+              activeView ===
+              "manage-events"
+                ? "active"
+                : ""
+            }
             onClick={() => {
-              setActiveView("manage-events");
-              setSelectedEvent(null);
-              setEditingEvent(null);
-              setActionMessage("");
+              setActiveView(
+                "manage-events"
+              );
+
+              setSelectedEvent(
+                null
+              );
+
+              setEditingEvent(
+                null
+              );
+
+              setActionMessage(
+                ""
+              );
             }}
           >
             Manage Events
@@ -616,75 +1021,125 @@ function OrganizerDashboard({ user }) {
 
           <button
             type="button"
-            className={activeView === "check-in" ? "active" : ""}
-            onClick={() => setActiveView("check-in")}
+            className={
+              activeView ===
+              "check-in"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setActiveView(
+                "check-in"
+              )
+            }
           >
             Ticket Check-in
           </button>
 
           <button
             type="button"
-            className={activeView === "analytics" ? "active" : ""}
-            onClick={() => setActiveView("analytics")}
+            className={
+              activeView ===
+              "analytics"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setActiveView(
+                "analytics"
+              )
+            }
           >
             Analytics
           </button>
 
           <button
             type="button"
-            className={activeView === "profile" ? "active" : ""}
-            onClick={() => setActiveView("profile")}
+            className={
+              activeView ===
+              "profile"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setActiveView(
+                "profile"
+              )
+            }
           >
             Profile
           </button>
+
+          <button
+            type="button"
+            onClick={onLogout}
+          >
+            Logout
+          </button>
+
         </nav>
 
         <div className="organizer-sidebar-note">
-          <span>EVENTEYE FOR ORGANIZERS</span>
+
+          <span>
+            EVENTEYE FOR ORGANIZERS
+          </span>
 
           <p>
-            Create better campus experiences and understand your audience.
+            Create better campus
+            experiences and understand
+            your audience.
           </p>
+
         </div>
+
       </aside>
 
       <main className="organizer-main">
-        {activeView === "dashboard" && (
+
+        {activeView ===
+          "dashboard" && (
           <>
+
             <header className="organizer-header">
+
               <div>
                 <span className="organizer-eyebrow">
                   ORGANIZER SPACE
                 </span>
 
                 <h1>
-                  Welcome back, {user?.full_name || "Organizer"}
+                  Welcome back,{" "}
+                  {user?.full_name ||
+                    "Organizer"}
                 </h1>
 
                 <p>
-                  Here’s how your events are performing.
+                  Here’s how your events
+                  are performing.
                 </p>
               </div>
 
               <div className="organizer-header-actions">
-                <button
-                  type="button"
-                  className="organizer-notification"
-                >
-                  🔔
-                </button>
 
                 <button
                   type="button"
                   className="organizer-create-button"
-                  onClick={() => setActiveView("create-event")}
+                  onClick={() =>
+                    setActiveView(
+                      "create-event"
+                    )
+                  }
                 >
                   + Create Event
                 </button>
+
               </div>
+
             </header>
 
             <section className="organizer-stats-grid">
+
               <StatCard
                 label="Total Events"
                 value={totalEvents}
@@ -693,498 +1148,900 @@ function OrganizerDashboard({ user }) {
 
               <StatCard
                 label="Upcoming"
-                value={allUpcomingEvents.length}
+                value={
+                  allUpcomingEvents.length
+                }
                 note="Future events"
               />
 
               <StatCard
                 label="Past Events"
-                value={pastEvents.length}
+                value={
+                  pastEvents.length
+                }
                 note="Event history"
               />
 
               <StatCard
                 label="Cancelled"
-                value={cancelledEvents.length}
+                value={
+                  cancelledEvents.length
+                }
                 note="Cancelled events"
               />
+
             </section>
 
             <section className="organizer-content-grid">
+
               <div className="organizer-events-panel">
+
                 <div className="organizer-section-heading">
+
                   <div>
-                    <span>YOUR EVENTS</span>
-                    <h2>Upcoming Events</h2>
+                    <span>
+                      YOUR EVENTS
+                    </span>
+
+                    <h2>
+                      Upcoming Events
+                    </h2>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => setActiveView("manage-events")}
+                    onClick={() =>
+                      setActiveView(
+                        "manage-events"
+                      )
+                    }
                   >
                     Manage Events →
                   </button>
+
                 </div>
 
                 {loading ? (
-                  <p style={{ padding: "0 24px 24px" }}>
+                  <p
+                    style={{
+                      padding:
+                        "0 24px 24px",
+                    }}
+                  >
                     Loading events...
                   </p>
-                ) : upcomingEvents.length === 0 ? (
+                ) : upcomingEvents.length ===
+                  0 ? (
                   <div className="organizer-empty-state">
-                    <h3>No upcoming events</h3>
+
+                    <h3>
+                      No upcoming events
+                    </h3>
 
                     <p>
-                      Create a new event and it will appear here.
+                      Create a new event
+                      and it will appear
+                      here.
                     </p>
 
                     <button
                       type="button"
-                      onClick={() => setActiveView("create-event")}
-                      style={{ marginTop: "16px" }}
+                      onClick={() =>
+                        setActiveView(
+                          "create-event"
+                        )
+                      }
+                      style={{
+                        marginTop:
+                          "16px",
+                      }}
                     >
                       + Create Event
                     </button>
+
                   </div>
                 ) : (
                   <div className="organizer-event-list">
-                    {upcomingEvents.map((event) => (
-                      <div
-                        className="organizer-event-row"
-                        key={event.event_id}
-                      >
-                        <div className="organizer-date-box">
-                          <strong>{getDay(event.event_date)}</strong>
-                          <span>{getMonth(event.event_date)}</span>
+
+                    {upcomingEvents.map(
+                      (event) => (
+                        <div
+                          className="organizer-event-row"
+                          key={
+                            event.event_id
+                          }
+                        >
+
+                          <div className="organizer-date-box">
+
+                            <strong>
+                              {getDay(
+                                event.event_date
+                              )}
+                            </strong>
+
+                            <span>
+                              {getMonth(
+                                event.event_date
+                              )}
+                            </span>
+
+                          </div>
+
+                          <div className="organizer-event-info">
+
+                            <span className="organizer-event-category">
+                              {
+                                event.category_name
+                              }
+                            </span>
+
+                            <h3>
+                              {
+                                event.event_name
+                              }
+                            </h3>
+
+                            <p>
+                              {formatDate(
+                                event.event_date
+                              )}
+                              {" · "}
+                              {
+                                event.location
+                              }
+                            </p>
+
+                            <p>
+                              Status:{" "}
+                              {formatStatus(
+                                event.status
+                              )}
+                            </p>
+
+                          </div>
+
+                          <div className="organizer-event-actions">
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveView(
+                                  "manage-events"
+                                );
+
+                                handleViewEvent(
+                                  event
+                                );
+                              }}
+                            >
+                              Manage
+                            </button>
+
+                          </div>
+
                         </div>
+                      )
+                    )}
 
-                        <div className="organizer-event-info">
-                          <span className="organizer-event-category">
-                            {event.category_name}
-                          </span>
-
-                          <h3>{event.event_name}</h3>
-
-                          <p>
-                            {formatDate(event.event_date)}
-                            {" · "}
-                            {event.location}
-                          </p>
-
-                          <p>
-                            Status: {formatStatus(event.status)}
-                          </p>
-                        </div>
-
-                        <div className="organizer-event-actions">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveView("manage-events");
-                              handleViewEvent(event);
-                            }}
-                          >
-                            Manage
-                          </button>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 )}
+
               </div>
 
               <aside className="organizer-side-panel">
+
                 <div className="organizer-quick-action-card">
+
                   <span className="organizer-card-label">
                     QUICK ACTION
                   </span>
 
-                  <h2>Create your next campus event</h2>
+                  <h2>
+                    Create your next campus
+                    event
+                  </h2>
 
                   <p>
-                    Add your event details, category, date, venue and
-                    capacity, then start accepting student bookings.
+                    Add your event details,
+                    category, date, venue
+                    and capacity, then start
+                    accepting student
+                    bookings.
                   </p>
 
                   <button
                     type="button"
-                    onClick={() => setActiveView("create-event")}
+                    onClick={() =>
+                      setActiveView(
+                        "create-event"
+                      )
+                    }
                   >
                     + Create Event
                   </button>
+
                 </div>
 
                 <div className="organizer-checkin-card">
+
                   <span className="organizer-card-label">
                     EVENT DAY
                   </span>
 
-                  <h3>Ticket Check-in</h3>
+                  <h3>
+                    Ticket Check-in
+                  </h3>
 
                   <p>
-                    Verify student tickets and record attendance.
+                    Verify student tickets
+                    and record attendance.
                   </p>
 
                   <button
                     type="button"
-                    onClick={() => setActiveView("check-in")}
+                    onClick={() =>
+                      setActiveView(
+                        "check-in"
+                      )
+                    }
                   >
                     Open Check-in
                   </button>
+
                 </div>
+
               </aside>
+
             </section>
 
             <section className="organizer-insights">
+
               <div className="organizer-section-heading">
+
                 <div>
-                  <span>EVENT HISTORY</span>
-                  <h2>Your event activity</h2>
+                  <span>
+                    EVENT HISTORY
+                  </span>
+
+                  <h2>
+                    Your event activity
+                  </h2>
                 </div>
+
               </div>
 
               <div className="organizer-insight-placeholder">
+
                 <div>
-                  <span>Upcoming</span>
-                  <strong>{allUpcomingEvents.length}</strong>
+                  <span>
+                    Upcoming
+                  </span>
+
+                  <strong>
+                    {
+                      allUpcomingEvents.length
+                    }
+                  </strong>
                 </div>
 
                 <div>
                   <span>Past</span>
-                  <strong>{pastEvents.length}</strong>
+
+                  <strong>
+                    {pastEvents.length}
+                  </strong>
                 </div>
 
                 <div>
-                  <span>Cancelled</span>
-                  <strong>{cancelledEvents.length}</strong>
+                  <span>
+                    Cancelled
+                  </span>
+
+                  <strong>
+                    {
+                      cancelledEvents.length
+                    }
+                  </strong>
                 </div>
 
                 <div>
                   <span>Total</span>
-                  <strong>{totalEvents}</strong>
+
+                  <strong>
+                    {totalEvents}
+                  </strong>
                 </div>
+
               </div>
+
             </section>
+
           </>
         )}
 
-        {activeView === "manage-events" && (
+        {activeView ===
+          "manage-events" && (
           <>
+
             <header className="organizer-header">
+
               <div>
                 <span className="organizer-eyebrow">
                   EVENT MANAGEMENT
                 </span>
 
-                <h1>Manage Events</h1>
+                <h1>
+                  Manage Events
+                </h1>
 
                 <p>
-                  View, edit and manage all your published events.
+                  View, edit and manage all
+                  your published events.
                 </p>
               </div>
 
               <div className="organizer-header-actions">
+
                 <button
                   type="button"
                   className="organizer-create-button"
-                  onClick={() => setActiveView("create-event")}
+                  onClick={() =>
+                    setActiveView(
+                      "create-event"
+                    )
+                  }
                 >
                   + Create Event
                 </button>
+
               </div>
+
             </header>
 
             {actionMessage && (
               <MessageBox
                 type={actionType}
-                message={actionMessage}
+                message={
+                  actionMessage
+                }
               />
             )}
 
-            <section style={panelStyle}>
-              <div style={filterRowStyle}>
+            <section
+              style={panelStyle}
+            >
+
+              <div
+                style={
+                  filterRowStyle
+                }
+              >
+
                 <input
                   type="text"
                   placeholder="Search your events..."
-                  value={manageSearch}
+                  value={
+                    manageSearch
+                  }
                   onChange={(event) =>
-                    setManageSearch(event.target.value)
+                    setManageSearch(
+                      event.target
+                        .value
+                    )
                   }
                   style={{
                     ...inputStyle,
                     flex: "1",
-                    minWidth: "240px",
+                    minWidth:
+                      "240px",
                   }}
                 />
 
                 <div
                   style={{
-                    display: "flex",
+                    display:
+                      "flex",
                     gap: "8px",
-                    flexWrap: "wrap",
+                    flexWrap:
+                      "wrap",
                   }}
                 >
+
                   <FilterButton
                     label="All"
-                    active={manageFilter === "all"}
-                    onClick={() => setManageFilter("all")}
+                    active={
+                      manageFilter ===
+                      "all"
+                    }
+                    onClick={() =>
+                      setManageFilter(
+                        "all"
+                      )
+                    }
                   />
 
                   <FilterButton
                     label="Upcoming"
-                    active={manageFilter === "upcoming"}
-                    onClick={() => setManageFilter("upcoming")}
+                    active={
+                      manageFilter ===
+                      "upcoming"
+                    }
+                    onClick={() =>
+                      setManageFilter(
+                        "upcoming"
+                      )
+                    }
                   />
 
                   <FilterButton
                     label="Past"
-                    active={manageFilter === "past"}
-                    onClick={() => setManageFilter("past")}
+                    active={
+                      manageFilter ===
+                      "past"
+                    }
+                    onClick={() =>
+                      setManageFilter(
+                        "past"
+                      )
+                    }
                   />
 
                   <FilterButton
                     label="Cancelled"
-                    active={manageFilter === "cancelled"}
-                    onClick={() => setManageFilter("cancelled")}
+                    active={
+                      manageFilter ===
+                      "cancelled"
+                    }
+                    onClick={() =>
+                      setManageFilter(
+                        "cancelled"
+                      )
+                    }
                   />
+
                 </div>
+
               </div>
+
             </section>
 
             <section className="organizer-events-panel">
+
               <div className="organizer-section-heading">
+
                 <div>
-                  <span>YOUR EVENTS</span>
+                  <span>
+                    YOUR EVENTS
+                  </span>
 
                   <h2>
-                    {managedEvents.length} event
-                    {managedEvents.length === 1 ? "" : "s"}
+                    {
+                      managedEvents.length
+                    }{" "}
+                    event
+                    {managedEvents.length ===
+                    1
+                      ? ""
+                      : "s"}
                   </h2>
                 </div>
+
               </div>
 
               {loading ? (
-                <p style={{ padding: "0 24px 24px" }}>
+                <p
+                  style={{
+                    padding:
+                      "0 24px 24px",
+                  }}
+                >
                   Loading events...
                 </p>
-              ) : managedEvents.length === 0 ? (
+              ) : managedEvents.length ===
+                0 ? (
                 <div className="organizer-empty-state">
-                  <h3>No events found</h3>
-                  <p>Try another search or filter.</p>
+
+                  <h3>
+                    No events found
+                  </h3>
+
+                  <p>
+                    Try another search or
+                    filter.
+                  </p>
+
                 </div>
               ) : (
                 <div className="organizer-event-list">
-                  {managedEvents.map((event) => (
-                    <div
-                      className="organizer-event-row"
-                      key={event.event_id}
-                    >
-                      <div className="organizer-date-box">
-                        <strong>{getDay(event.event_date)}</strong>
-                        <span>{getMonth(event.event_date)}</span>
-                      </div>
 
-                      <div className="organizer-event-info">
-                        <span className="organizer-event-category">
-                          {event.category_name}
-                        </span>
-
-                        <h3>{event.event_name}</h3>
-
-                        <p>
-                          {formatDate(event.event_date)}
-                          {" · "}
-                          {event.location}
-                        </p>
-
-                        <StatusBadge status={getDisplayStatus(event)} />
-                      </div>
-
+                  {managedEvents.map(
+                    (event) => (
                       <div
-                        className="organizer-event-actions"
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          flexWrap: "wrap",
-                        }}
+                        className="organizer-event-row"
+                        key={
+                          event.event_id
+                        }
                       >
-                        <button
-                          type="button"
-                          onClick={() => handleViewEvent(event)}
+
+                        <div className="organizer-date-box">
+
+                          <strong>
+                            {getDay(
+                              event.event_date
+                            )}
+                          </strong>
+
+                          <span>
+                            {getMonth(
+                              event.event_date
+                            )}
+                          </span>
+
+                        </div>
+
+                        <div className="organizer-event-info">
+
+                          <span className="organizer-event-category">
+                            {
+                              event.category_name
+                            }
+                          </span>
+
+                          <h3>
+                            {
+                              event.event_name
+                            }
+                          </h3>
+
+                          <p>
+                            {formatDate(
+                              event.event_date
+                            )}
+                            {" · "}
+                            {
+                              event.location
+                            }
+                          </p>
+
+                          <StatusBadge
+                            status={getDisplayStatus(
+                              event
+                            )}
+                          />
+
+                        </div>
+
+                        <div
+                          className="organizer-event-actions"
+                          style={{
+                            display:
+                              "flex",
+                            gap: "8px",
+                            flexWrap:
+                              "wrap",
+                          }}
                         >
-                          View
-                        </button>
 
-                        {event.status !== "cancelled" &&
-                          new Date(event.event_date) >= new Date() && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => handleStartEdit(event)}
-                              >
-                                Edit
-                              </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleViewEvent(
+                                event
+                              )
+                            }
+                          >
+                            View
+                          </button>
 
-                              <button
-                                type="button"
-                                disabled={
-                                  cancellingEventId === event.event_id
-                                }
-                                onClick={() => handleCancelEvent(event)}
-                                style={{ color: "#b23c3c" }}
-                              >
-                                {cancellingEventId === event.event_id
-                                  ? "Cancelling..."
-                                  : "Cancel"}
-                              </button>
-                            </>
-                          )}
+                          {event.status !==
+                            "cancelled" &&
+                            new Date(
+                              event.event_date
+                            ) >=
+                              new Date() && (
+                              <>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleStartEdit(
+                                      event
+                                    )
+                                  }
+                                >
+                                  Edit
+                                </button>
+
+                                <button
+                                  type="button"
+                                  disabled={
+                                    cancellingEventId ===
+                                    event.event_id
+                                  }
+                                  onClick={() =>
+                                    handleCancelEvent(
+                                      event
+                                    )
+                                  }
+                                  style={{
+                                    color:
+                                      "#b23c3c",
+                                  }}
+                                >
+                                  {cancellingEventId ===
+                                  event.event_id
+                                    ? "Cancelling..."
+                                    : "Cancel"}
+                                </button>
+
+                              </>
+                            )}
+
+                        </div>
+
                       </div>
-                    </div>
-                  ))}
+                    )
+                  )}
+
                 </div>
               )}
+
             </section>
 
             {selectedEvent && (
-              <section style={detailPanelStyle}>
-                <div style={headingRowStyle}>
+              <section
+                style={
+                  detailPanelStyle
+                }
+              >
+
+                <div
+                  style={
+                    headingRowStyle
+                  }
+                >
+
                   <div>
                     <span className="organizer-eyebrow">
                       EVENT DETAILS
                     </span>
 
-                    <h2>{selectedEvent.event_name}</h2>
+                    <h2>
+                      {
+                        selectedEvent.event_name
+                      }
+                    </h2>
 
                     <StatusBadge
-                      status={getDisplayStatus(selectedEvent)}
+                      status={getDisplayStatus(
+                        selectedEvent
+                      )}
                     />
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => setSelectedEvent(null)}
+                    onClick={() =>
+                      setSelectedEvent(
+                        null
+                      )
+                    }
                   >
                     ✕
                   </button>
+
                 </div>
 
-                <div style={infoGridStyle}>
+                <div
+                  style={
+                    infoGridStyle
+                  }
+                >
+
                   <InfoBox
                     label="Category"
-                    value={selectedEvent.category_name}
+                    value={
+                      selectedEvent.category_name
+                    }
                   />
 
                   <InfoBox
                     label="Location"
-                    value={selectedEvent.location}
+                    value={
+                      selectedEvent.location
+                    }
                   />
 
                   <InfoBox
                     label="Start"
-                    value={formatDate(selectedEvent.event_date)}
+                    value={formatDate(
+                      selectedEvent.event_date
+                    )}
                   />
 
                   <InfoBox
                     label="End"
                     value={
                       selectedEvent.end_date
-                        ? formatDate(selectedEvent.end_date)
+                        ? formatDate(
+                            selectedEvent.end_date
+                          )
                         : "Not specified"
                     }
                   />
 
                   <InfoBox
                     label="Capacity"
-                    value={selectedEvent.capacity || "Unlimited"}
+                    value={
+                      selectedEvent.capacity ||
+                      "Unlimited"
+                    }
                   />
+
                 </div>
 
-                <div style={{ marginTop: "20px" }}>
-                  <strong>Description</strong>
+                <div
+                  style={{
+                    marginTop:
+                      "20px",
+                  }}
+                >
+
+                  <strong>
+                    Description
+                  </strong>
 
                   <p
                     style={{
-                      color: "#716b78",
-                      lineHeight: "1.6",
+                      color:
+                        "#716b78",
+                      lineHeight:
+                        "1.6",
                     }}
                   >
-                    {selectedEvent.description}
+                    {
+                      selectedEvent.description
+                    }
                   </p>
+
                 </div>
+
               </section>
             )}
 
             {editingEvent && (
-              <section style={detailPanelStyle}>
-                <div style={headingRowStyle}>
+              <section
+                style={
+                  detailPanelStyle
+                }
+              >
+
+                <div
+                  style={
+                    headingRowStyle
+                  }
+                >
+
                   <div>
                     <span className="organizer-eyebrow">
                       EDIT EVENT
                     </span>
 
-                    <h2>Update Event</h2>
+                    <h2>
+                      Update Event
+                    </h2>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => setEditingEvent(null)}
+                    onClick={() =>
+                      setEditingEvent(
+                        null
+                      )
+                    }
                   >
                     ✕
                   </button>
+
                 </div>
 
                 <form
-                  onSubmit={handleSaveEdit}
+                  onSubmit={
+                    handleSaveEdit
+                  }
                   style={{
-                    marginTop: "20px",
-                    display: "grid",
+                    marginTop:
+                      "20px",
+                    display:
+                      "grid",
                     gap: "16px",
                   }}
                 >
+
                   <OrganizerField
                     label="Event Name"
                     name="event_name"
-                    value={editingEvent.event_name}
-                    onChange={handleEditChange}
+                    value={
+                      editingEvent.event_name
+                    }
+                    onChange={
+                      handleEditChange
+                    }
                   />
 
-                  <label style={fieldLabelStyle}>
-                    <strong>Description</strong>
+                  <label
+                    style={
+                      fieldLabelStyle
+                    }
+                  >
+
+                    <strong>
+                      Description
+                    </strong>
 
                     <textarea
                       name="description"
                       rows="5"
-                      value={editingEvent.description}
-                      onChange={handleEditChange}
-                      style={inputStyle}
+                      value={
+                        editingEvent.description
+                      }
+                      onChange={
+                        handleEditChange
+                      }
+                      style={
+                        inputStyle
+                      }
                     />
+
                   </label>
 
                   <OrganizerField
                     label="Location"
                     name="location"
-                    value={editingEvent.location}
-                    onChange={handleEditChange}
+                    value={
+                      editingEvent.location
+                    }
+                    onChange={
+                      handleEditChange
+                    }
                   />
 
-                  <div style={infoGridStyle}>
+                  <div
+                    style={
+                      infoGridStyle
+                    }
+                  >
+
                     <OrganizerField
                       label="Start Date & Time"
                       name="event_date"
                       type="datetime-local"
-                      min={todayDateTime}
-                      value={editingEvent.event_date}
-                      onChange={handleEditChange}
+                      min={
+                        todayDateTime
+                      }
+                      value={
+                        editingEvent.event_date
+                      }
+                      onChange={
+                        handleEditChange
+                      }
                     />
 
                     <OrganizerField
                       label="End Date & Time"
                       name="end_date"
                       type="datetime-local"
-                      min={editingEvent.event_date || todayDateTime}
-                      value={editingEvent.end_date}
-                      onChange={handleEditChange}
+                      min={
+                        editingEvent.event_date ||
+                        todayDateTime
+                      }
+                      value={
+                        editingEvent.end_date
+                      }
+                      onChange={
+                        handleEditChange
+                      }
                     />
 
                     <OrganizerField
@@ -1192,15 +2049,29 @@ function OrganizerDashboard({ user }) {
                       name="capacity"
                       type="number"
                       min="1"
-                      value={editingEvent.capacity}
-                      onChange={handleEditChange}
+                      value={
+                        editingEvent.capacity
+                      }
+                      onChange={
+                        handleEditChange
+                      }
                     />
+
                   </div>
 
-                  <div style={actionRowStyle}>
+                  <div
+                    style={
+                      actionRowStyle
+                    }
+                  >
+
                     <button
                       type="button"
-                      onClick={() => setEditingEvent(null)}
+                      onClick={() =>
+                        setEditingEvent(
+                          null
+                        )
+                      }
                     >
                       Cancel
                     </button>
@@ -1208,31 +2079,46 @@ function OrganizerDashboard({ user }) {
                     <button
                       type="submit"
                       className="organizer-create-button"
-                      disabled={savingEdit}
+                      disabled={
+                        savingEdit
+                      }
                     >
-                      {savingEdit ? "Saving..." : "Save Changes"}
+                      {savingEdit
+                        ? "Saving..."
+                        : "Save Changes"}
                     </button>
+
                   </div>
+
                 </form>
+
               </section>
             )}
+
           </>
         )}
 
-        {activeView === "check-in" && (
+        {activeView ===
+          "check-in" && (
           <>
+
             <header className="organizer-header">
+
               <div>
                 <span className="organizer-eyebrow">
                   EVENT DAY
                 </span>
 
-                <h1>Ticket Check-in</h1>
+                <h1>
+                  Ticket Check-in
+                </h1>
 
                 <p>
-                  Verify student tickets and record attendance.
+                  Verify student tickets
+                  and record attendance.
                 </p>
               </div>
+
             </header>
 
             <section
@@ -1244,121 +2130,215 @@ function OrganizerDashboard({ user }) {
                 alignItems: "start",
               }}
             >
+
               <div
                 style={{
                   display: "grid",
                   gap: "20px",
                 }}
               >
-                <section style={panelStyle}>
+
+                <section
+                  style={
+                    panelStyle
+                  }
+                >
+
                   <span className="organizer-eyebrow">
                     SELECT EVENT
                   </span>
 
-                  <h2>Event Check-in Desk</h2>
+                  <h2>
+                    Event Check-in Desk
+                  </h2>
 
-                  <p style={{ color: "#716b78" }}>
-                    Choose the event you are checking students into.
+                  <p
+                    style={{
+                      color:
+                        "#716b78",
+                    }}
+                  >
+                    Choose the event you
+                    are checking students
+                    into.
                   </p>
 
                   <select
-                    value={checkInEventId}
-                    onChange={handleCheckInEventChange}
+                    value={
+                      checkInEventId
+                    }
+                    onChange={
+                      handleCheckInEventChange
+                    }
                     style={{
                       ...inputStyle,
-                      marginTop: "12px",
+                      marginTop:
+                        "12px",
                     }}
                   >
-                    <option value="">Select an event</option>
+
+                    <option value="">
+                      Select an event
+                    </option>
 
                     {events
                       .filter(
-                        (event) => event.status !== "cancelled"
+                        (event) =>
+                          event.status !==
+                          "cancelled"
                       )
-                      .map((event) => (
-                        <option
-                          key={event.event_id}
-                          value={event.event_id}
-                        >
-                          {event.event_name} —{" "}
-                          {formatShortDate(event.event_date)}
-                        </option>
-                      ))}
+                      .map(
+                        (event) => (
+                          <option
+                            key={
+                              event.event_id
+                            }
+                            value={
+                              event.event_id
+                            }
+                          >
+                            {
+                              event.event_name
+                            }{" "}
+                            —{" "}
+                            {formatShortDate(
+                              event.event_date
+                            )}
+                          </option>
+                        )
+                      )}
+
                   </select>
+
                 </section>
 
-                <section style={panelStyle}>
+                <section
+                  style={
+                    panelStyle
+                  }
+                >
+
                   <span className="organizer-eyebrow">
                     VERIFY TICKET
                   </span>
 
-                  <h2>Enter Ticket Code</h2>
+                  <h2>
+                    Enter Ticket Code
+                  </h2>
 
-                  <p style={{ color: "#716b78" }}>
-                    Enter the code shown below the student's QR ticket.
+                  <p
+                    style={{
+                      color:
+                        "#716b78",
+                    }}
+                  >
+                    Enter the code shown
+                    below the student's QR
+                    ticket.
                   </p>
 
                   <form
-                    onSubmit={handleVerifyTicket}
+                    onSubmit={
+                      handleVerifyTicket
+                    }
                     style={{
-                      display: "flex",
+                      display:
+                        "flex",
                       gap: "10px",
-                      marginTop: "16px",
-                      flexWrap: "wrap",
+                      marginTop:
+                        "16px",
+                      flexWrap:
+                        "wrap",
                     }}
                   >
+
                     <input
                       type="text"
                       placeholder="EVT-XXXXXXXX"
-                      value={ticketCode}
+                      value={
+                        ticketCode
+                      }
                       onChange={(event) =>
-                        setTicketCode(event.target.value.toUpperCase())
+                        setTicketCode(
+                          event.target.value.toUpperCase()
+                        )
                       }
                       style={{
                         ...inputStyle,
                         flex: "1",
-                        minWidth: "220px",
-                        textTransform: "uppercase",
+                        minWidth:
+                          "220px",
+                        textTransform:
+                          "uppercase",
                       }}
                     />
 
                     <button
                       type="submit"
                       className="organizer-create-button"
-                      disabled={verifyingTicket}
+                      disabled={
+                        verifyingTicket
+                      }
                     >
                       {verifyingTicket
                         ? "Verifying..."
                         : "Verify Ticket"}
                     </button>
+
                   </form>
 
                   {checkInMessage && (
-                    <div style={{ marginTop: "16px" }}>
+                    <div
+                      style={{
+                        marginTop:
+                          "16px",
+                      }}
+                    >
                       <MessageBox
-                        type={checkInMessageType}
-                        message={checkInMessage}
+                        type={
+                          checkInMessageType
+                        }
+                        message={
+                          checkInMessage
+                        }
                       />
                     </div>
                   )}
+
                 </section>
 
                 {verifiedTicket && (
-                  <section style={detailPanelStyle}>
-                    <div style={headingRowStyle}>
+                  <section
+                    style={
+                      detailPanelStyle
+                    }
+                  >
+
+                    <div
+                      style={
+                        headingRowStyle
+                      }
+                    >
+
                       <div>
                         <span className="organizer-eyebrow">
                           TICKET RESULT
                         </span>
 
                         <h2>
-                          {verifiedTicket.student?.full_name}
+                          {
+                            verifiedTicket
+                              .student
+                              ?.full_name
+                          }
                         </h2>
                       </div>
 
                       <StatusBadge
                         status={
-                          verifiedTicket.ticket?.ticket_status ===
+                          verifiedTicket
+                            .ticket
+                            ?.ticket_status ===
                           "used"
                             ? "Checked In"
                             : verifiedTicket.valid
@@ -1366,76 +2346,114 @@ function OrganizerDashboard({ user }) {
                             : "Invalid"
                         }
                       />
+
                     </div>
 
-                    <div style={infoGridStyle}>
+                    <div
+                      style={
+                        infoGridStyle
+                      }
+                    >
+
                       <InfoBox
                         label="Ticket Code"
                         value={
-                          verifiedTicket.ticket?.ticket_code || "—"
+                          verifiedTicket
+                            .ticket
+                            ?.ticket_code ||
+                          "—"
                         }
                       />
 
                       <InfoBox
                         label="Student"
                         value={
-                          verifiedTicket.student?.full_name || "—"
+                          verifiedTicket
+                            .student
+                            ?.full_name ||
+                          "—"
                         }
                       />
 
                       <InfoBox
                         label="Email"
                         value={
-                          verifiedTicket.student?.email || "—"
+                          verifiedTicket
+                            .student
+                            ?.email ||
+                          "—"
                         }
                       />
 
                       <InfoBox
                         label="Event"
                         value={
-                          verifiedTicket.event?.event_name || "—"
+                          verifiedTicket
+                            .event
+                            ?.event_name ||
+                          "—"
                         }
                       />
 
                       <InfoBox
                         label="Venue"
                         value={
-                          verifiedTicket.event?.location || "—"
+                          verifiedTicket
+                            .event
+                            ?.location ||
+                          "—"
                         }
                       />
 
                       <InfoBox
                         label="Booking"
                         value={formatStatus(
-                          verifiedTicket.booking?.booking_status ||
+                          verifiedTicket
+                            .booking
+                            ?.booking_status ||
                             "unknown"
                         )}
                       />
+
                     </div>
 
-                    {verifiedTicket.ticket?.checked_in_at && (
+                    {verifiedTicket
+                      .ticket
+                      ?.checked_in_at && (
                       <p
                         style={{
-                          marginTop: "18px",
-                          color: "#716b78",
+                          marginTop:
+                            "18px",
+                          color:
+                            "#716b78",
                         }}
                       >
                         Checked in:{" "}
                         <strong>
                           {formatDate(
-                            verifiedTicket.ticket.checked_in_at
+                            verifiedTicket
+                              .ticket
+                              .checked_in_at
                           )}
                         </strong>
                       </p>
                     )}
 
                     {verifiedTicket.valid && (
-                      <div style={actionRowStyle}>
+                      <div
+                        style={
+                          actionRowStyle
+                        }
+                      >
                         <button
                           type="button"
                           className="organizer-create-button"
-                          onClick={handleCheckInTicket}
-                          disabled={checkingInTicket}
+                          onClick={
+                            handleCheckInTicket
+                          }
+                          disabled={
+                            checkingInTicket
+                          }
                         >
                           {checkingInTicket
                             ? "Checking In..."
@@ -1443,8 +2461,10 @@ function OrganizerDashboard({ user }) {
                         </button>
                       </div>
                     )}
+
                   </section>
                 )}
+
               </div>
 
               <aside
@@ -1453,37 +2473,58 @@ function OrganizerDashboard({ user }) {
                   gap: "16px",
                 }}
               >
-                <section style={panelStyle}>
+
+                <section
+                  style={
+                    panelStyle
+                  }
+                >
+
                   <span className="organizer-eyebrow">
                     ATTENDANCE
                   </span>
 
-                  <h2>Check-in Summary</h2>
+                  <h2>
+                    Check-in Summary
+                  </h2>
 
                   <div
                     style={{
-                      display: "grid",
+                      display:
+                        "grid",
                       gap: "12px",
-                      marginTop: "18px",
+                      marginTop:
+                        "18px",
                     }}
                   >
+
                     <MiniStat
                       label="Booked"
-                      value={checkInSummary.total_booked}
+                      value={
+                        checkInSummary.total_booked
+                      }
                     />
 
                     <MiniStat
                       label="Checked In"
-                      value={checkInSummary.total_checked_in}
+                      value={
+                        checkInSummary.total_checked_in
+                      }
                     />
 
                     <MiniStat
                       label="Remaining"
-                      value={checkInSummary.remaining}
+                      value={
+                        checkInSummary.remaining
+                      }
                     />
+
                   </div>
+
                 </section>
+
               </aside>
+
             </section>
 
             <section
@@ -1492,122 +2533,188 @@ function OrganizerDashboard({ user }) {
                 marginTop: "20px",
               }}
             >
-              <div style={headingRowStyle}>
+
+              <div
+                style={
+                  headingRowStyle
+                }
+              >
+
                 <div>
                   <span className="organizer-eyebrow">
                     ATTENDEE LIST
                   </span>
 
-                  <h2>Student Check-ins</h2>
+                  <h2>
+                    Student Check-ins
+                  </h2>
                 </div>
 
                 {checkInEventId && (
                   <button
                     type="button"
-                    onClick={loadEventCheckIns}
+                    onClick={
+                      loadEventCheckIns
+                    }
                   >
                     Refresh
                   </button>
                 )}
+
               </div>
 
               {!checkInEventId ? (
                 <div
                   style={{
-                    padding: "30px 0",
-                    color: "#817a89",
+                    padding:
+                      "30px 0",
+                    color:
+                      "#817a89",
                   }}
                 >
-                  Select an event to view its attendee list.
+                  Select an event to view
+                  its attendee list.
                 </div>
               ) : loadingCheckIns ? (
-                <div style={{ padding: "30px 0" }}>
-                  Loading attendees...
-                </div>
-              ) : checkInList.length === 0 ? (
                 <div
                   style={{
-                    padding: "30px 0",
-                    color: "#817a89",
+                    padding:
+                      "30px 0",
                   }}
                 >
-                  No student bookings for this event yet.
+                  Loading attendees...
+                </div>
+              ) : checkInList.length ===
+                0 ? (
+                <div
+                  style={{
+                    padding:
+                      "30px 0",
+                    color:
+                      "#817a89",
+                  }}
+                >
+                  No student bookings for
+                  this event yet.
                 </div>
               ) : (
                 <div
                   style={{
-                    display: "grid",
+                    display:
+                      "grid",
                     gap: "10px",
-                    marginTop: "18px",
+                    marginTop:
+                      "18px",
                   }}
                 >
-                  {checkInList.map((attendee) => {
-                    const checkedIn =
-                      attendee.ticket_status === "used" ||
-                      attendee.booking_status === "attended";
 
-                    return (
-                      <div
-                        key={attendee.booking_id}
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "minmax(0, 1fr) auto",
-                          gap: "16px",
-                          alignItems: "center",
-                          padding: "14px 16px",
-                          border: "1px solid #ece8f0",
-                          borderRadius: "12px",
-                          background: "#ffffff",
-                        }}
-                      >
-                        <div>
-                          <strong>
-                            {attendee.student?.full_name}
-                          </strong>
+                  {checkInList.map(
+                    (attendee) => {
+                      const checkedIn =
+                        attendee.ticket_status ===
+                          "used" ||
+                        attendee.booking_status ===
+                          "attended";
 
-                          <p
-                            style={{
-                              margin: "4px 0 0",
-                              color: "#817a89",
-                              fontSize: "12px",
-                            }}
-                          >
-                            {attendee.student?.email}
-                            {" · "}
-                            {attendee.ticket_code || "No ticket"}
-                          </p>
-                        </div>
-
-                        <StatusBadge
-                          status={
-                            checkedIn
-                              ? "Checked In"
-                              : "Not Checked In"
+                      return (
+                        <div
+                          key={
+                            attendee.booking_id
                           }
-                        />
-                      </div>
-                    );
-                  })}
+                          style={{
+                            display:
+                              "grid",
+                            gridTemplateColumns:
+                              "minmax(0, 1fr) auto",
+                            gap: "16px",
+                            alignItems:
+                              "center",
+                            padding:
+                              "14px 16px",
+                            border:
+                              "1px solid #ece8f0",
+                            borderRadius:
+                              "12px",
+                            background:
+                              "#ffffff",
+                          }}
+                        >
+
+                          <div>
+                            <strong>
+                              {
+                                attendee
+                                  .student
+                                  ?.full_name
+                              }
+                            </strong>
+
+                            <p
+                              style={{
+                                margin:
+                                  "4px 0 0",
+                                color:
+                                  "#817a89",
+                                fontSize:
+                                  "12px",
+                              }}
+                            >
+                              {
+                                attendee
+                                  .student
+                                  ?.email
+                              }
+                              {" · "}
+                              {attendee.ticket_code ||
+                                "No ticket"}
+                            </p>
+                          </div>
+
+                          <StatusBadge
+                            status={
+                              checkedIn
+                                ? "Checked In"
+                                : "Not Checked In"
+                            }
+                          />
+
+                        </div>
+                      );
+                    }
+                  )}
+
                 </div>
               )}
+
             </section>
+
           </>
         )}
 
-        {activeView === "analytics" && (
+        {activeView ===
+          "analytics" && (
           <OrganizerAnalytics
             user={user}
-            onBack={() => setActiveView("dashboard")}
+            onBack={() =>
+              setActiveView(
+                "dashboard"
+              )
+            }
           />
         )}
 
-        {activeView === "profile" && (
+        {activeView ===
+          "profile" && (
           <OrganizerProfile
             user={user}
-            onBack={() => setActiveView("dashboard")}
+            onBack={() =>
+              setActiveView(
+                "dashboard"
+              )
+            }
           />
         )}
+
       </main>
     </div>
   );
@@ -1647,49 +2754,74 @@ function StatusBadge({
   status,
 }) {
   const statusLower =
-    status?.toLowerCase() || "unknown";
+    status?.toLowerCase() ||
+    "unknown";
 
-  let background = "#f1eef5";
-  let color = "#625a68";
+  let background =
+    "#f1eef5";
+
+  let color =
+    "#625a68";
 
   if (
-    statusLower === "upcoming" ||
-    statusLower === "valid" ||
-    statusLower === "checked in"
+    statusLower ===
+      "upcoming" ||
+    statusLower ===
+      "valid" ||
+    statusLower ===
+      "checked in"
   ) {
-    background = "#edf9f2";
-    color = "#26734d";
+    background =
+      "#edf9f2";
+
+    color =
+      "#26734d";
   }
 
   if (
     statusLower === "past" ||
-    statusLower === "not checked in"
+    statusLower ===
+      "not checked in"
   ) {
-    background = "#f2f2f4";
-    color = "#63606a";
+    background =
+      "#f2f2f4";
+
+    color =
+      "#63606a";
   }
 
   if (
-    statusLower === "cancelled" ||
-    statusLower === "invalid"
+    statusLower ===
+      "cancelled" ||
+    statusLower ===
+      "invalid"
   ) {
-    background = "#fff1f1";
-    color = "#a23d3d";
+    background =
+      "#fff1f1";
+
+    color =
+      "#a23d3d";
   }
 
   return (
     <span
       style={{
-        display: "inline-flex",
+        display:
+          "inline-flex",
         marginTop: "8px",
-        padding: "6px 10px",
-        borderRadius: "999px",
+        padding:
+          "6px 10px",
+        borderRadius:
+          "999px",
         background,
         color,
         fontSize: "11px",
-        fontWeight: "800",
-        textTransform: "uppercase",
-        letterSpacing: "0.04em",
+        fontWeight:
+          "800",
+        textTransform:
+          "uppercase",
+        letterSpacing:
+          "0.04em",
       }}
     >
       {status}
@@ -1704,24 +2836,33 @@ function InfoBox({
   return (
     <div
       style={{
-        background: "#f8f7fa",
-        borderRadius: "12px",
+        background:
+          "#f8f7fa",
+        borderRadius:
+          "12px",
         padding: "15px",
       }}
     >
       <span
         style={{
-          display: "block",
-          color: "#867e8e",
-          fontSize: "11px",
-          marginBottom: "6px",
-          fontWeight: "700",
+          display:
+            "block",
+          color:
+            "#867e8e",
+          fontSize:
+            "11px",
+          marginBottom:
+            "6px",
+          fontWeight:
+            "700",
         }}
       >
         {label}
       </span>
 
-      <strong>{value}</strong>
+      <strong>
+        {value}
+      </strong>
     </div>
   );
 }
@@ -1734,16 +2875,21 @@ function MiniStat({
     <div
       style={{
         display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        background: "#f8f7fa",
-        borderRadius: "12px",
+        justifyContent:
+          "space-between",
+        alignItems:
+          "center",
+        background:
+          "#f8f7fa",
+        borderRadius:
+          "12px",
         padding: "14px",
       }}
     >
       <span
         style={{
-          color: "#716b78",
+          color:
+            "#716b78",
         }}
       >
         {label}
@@ -1751,7 +2897,8 @@ function MiniStat({
 
       <strong
         style={{
-          fontSize: "20px",
+          fontSize:
+            "20px",
         }}
       >
         {value}
@@ -1767,21 +2914,27 @@ function MessageBox({
   return (
     <div
       style={{
-        padding: "14px 16px",
-        borderRadius: "12px",
+        padding:
+          "14px 16px",
+        borderRadius:
+          "12px",
         background:
-          type === "success"
+          type ===
+          "success"
             ? "#edf9f2"
             : "#fff1f1",
         color:
-          type === "success"
+          type ===
+          "success"
             ? "#236d49"
             : "#a23d3d",
         border:
-          type === "success"
+          type ===
+          "success"
             ? "1px solid #c9ebd7"
             : "1px solid #f3cccc",
-        fontWeight: "600",
+        fontWeight:
+          "600",
       }}
     >
       {message}
@@ -1798,8 +2951,14 @@ function OrganizerField({
   min,
 }) {
   return (
-    <label style={fieldLabelStyle}>
-      <strong>{label}</strong>
+    <label
+      style={
+        fieldLabelStyle
+      }
+    >
+      <strong>
+        {label}
+      </strong>
 
       <input
         type={type}
@@ -1820,16 +2979,25 @@ function StatCard({
 }) {
   return (
     <div className="organizer-stat-card">
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <p>{note}</p>
+      <span>
+        {label}
+      </span>
+
+      <strong>
+        {value}
+      </strong>
+
+      <p>
+        {note}
+      </p>
     </div>
   );
 }
 
 const panelStyle = {
   background: "#ffffff",
-  border: "1px solid #e8e4ee",
+  border:
+    "1px solid #e8e4ee",
   borderRadius: "18px",
   padding: "24px",
 };
@@ -1844,14 +3012,17 @@ const filterRowStyle = {
   gap: "12px",
   flexWrap: "wrap",
   alignItems: "center",
-  justifyContent: "space-between",
+  justifyContent:
+    "space-between",
 };
 
 const headingRowStyle = {
   display: "flex",
-  justifyContent: "space-between",
+  justifyContent:
+    "space-between",
   gap: "20px",
-  alignItems: "flex-start",
+  alignItems:
+    "flex-start",
 };
 
 const infoGridStyle = {
@@ -1864,7 +3035,8 @@ const infoGridStyle = {
 
 const actionRowStyle = {
   display: "flex",
-  justifyContent: "flex-end",
+  justifyContent:
+    "flex-end",
   gap: "10px",
   marginTop: "20px",
 };
@@ -1876,10 +3048,12 @@ const fieldLabelStyle = {
 
 const inputStyle = {
   width: "100%",
-  boxSizing: "border-box",
+  boxSizing:
+    "border-box",
   padding: "12px 13px",
   borderRadius: "10px",
-  border: "1px solid #ded8e7",
+  border:
+    "1px solid #ded8e7",
   font: "inherit",
   outline: "none",
 };
@@ -1889,7 +3063,9 @@ function formatDate(date) {
     return "";
   }
 
-  return new Date(date).toLocaleString(
+  return new Date(
+    date
+  ).toLocaleString(
     "en-GB",
     {
       day: "numeric",
@@ -1901,12 +3077,16 @@ function formatDate(date) {
   );
 }
 
-function formatShortDate(date) {
+function formatShortDate(
+  date
+) {
   if (!date) {
     return "";
   }
 
-  return new Date(date).toLocaleDateString(
+  return new Date(
+    date
+  ).toLocaleDateString(
     "en-GB",
     {
       day: "numeric",
@@ -1921,7 +3101,9 @@ function getDay(date) {
     return "";
   }
 
-  return new Date(date).toLocaleDateString(
+  return new Date(
+    date
+  ).toLocaleDateString(
     "en-GB",
     {
       day: "2-digit",
@@ -1934,7 +3116,9 @@ function getMonth(date) {
     return "";
   }
 
-  return new Date(date)
+  return new Date(
+    date
+  )
     .toLocaleDateString(
       "en-GB",
       {
@@ -1944,25 +3128,36 @@ function getMonth(date) {
     .toUpperCase();
 }
 
-function formatStatus(status) {
+function formatStatus(
+  status
+) {
   if (!status) {
     return "Unknown";
   }
 
   return (
-    status.charAt(0).toUpperCase() +
+    status
+      .charAt(0)
+      .toUpperCase() +
     status.slice(1)
   );
 }
 
-function getDisplayStatus(event) {
-  if (event.status === "cancelled") {
+function getDisplayStatus(
+  event
+) {
+  if (
+    event.status ===
+    "cancelled"
+  ) {
     return "Cancelled";
   }
 
   if (
     event.event_date &&
-    new Date(event.event_date) < new Date()
+    new Date(
+      event.event_date
+    ) < new Date()
   ) {
     return "Past";
   }
@@ -1970,34 +3165,46 @@ function getDisplayStatus(event) {
   return "Upcoming";
 }
 
-function toDateTimeLocal(date) {
+function toDateTimeLocal(
+  date
+) {
   if (!date) {
     return "";
   }
 
-  const value = new Date(date);
+  const value =
+    new Date(date);
 
-  if (Number.isNaN(value.getTime())) {
+  if (
+    Number.isNaN(
+      value.getTime()
+    )
+  ) {
     return "";
   }
 
-  const year = value.getFullYear();
+  const year =
+    value.getFullYear();
 
-  const month = String(
-    value.getMonth() + 1
-  ).padStart(2, "0");
+  const month =
+    String(
+      value.getMonth() + 1
+    ).padStart(2, "0");
 
-  const day = String(
-    value.getDate()
-  ).padStart(2, "0");
+  const day =
+    String(
+      value.getDate()
+    ).padStart(2, "0");
 
-  const hours = String(
-    value.getHours()
-  ).padStart(2, "0");
+  const hours =
+    String(
+      value.getHours()
+    ).padStart(2, "0");
 
-  const minutes = String(
-    value.getMinutes()
-  ).padStart(2, "0");
+  const minutes =
+    String(
+      value.getMinutes()
+    ).padStart(2, "0");
 
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }

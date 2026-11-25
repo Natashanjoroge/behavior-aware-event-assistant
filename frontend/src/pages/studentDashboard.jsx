@@ -141,7 +141,7 @@ function getInterestIcon(category) {
   return INTEREST_ICONS[category] || "✨";
 }
 
-function StudentDashboard({ user }) {
+function StudentDashboard({ user, onLogout }) {
   const [events, setEvents] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [savedEventIds, setSavedEventIds] = useState([]);
@@ -524,6 +524,13 @@ function StudentDashboard({ user }) {
           >
             👤 Profile
           </button>
+
+          <button
+            type="button"
+            onClick={onLogout}
+          >
+            ↪ Logout
+          </button>
         </nav>
 
         <div className="interest-note">
@@ -573,13 +580,6 @@ function StudentDashboard({ user }) {
                 </button>
               )}
             </form>
-
-            <button
-              type="button"
-              className="notification-btn"
-            >
-              🔔
-            </button>
 
             <button
               type="button"

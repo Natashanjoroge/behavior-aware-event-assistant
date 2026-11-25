@@ -1,0 +1,241 @@
+
+================================================================================
+ANALYTICS_SUMMARIES
+================================================================================
+
+COLUMNS:
+analytics_id                   integer                   nullable=NO  default=nextval('analytics_summaries_analytics_id_seq'::regclass)
+event_id                       integer                   nullable=NO  default=None
+view_count                     integer                   nullable=YES default=0
+bookmark_count                 integer                   nullable=YES default=0
+booking_count                  integer                   nullable=YES default=0
+booking_conversion_rate        numeric                   nullable=YES default=None
+predicted_attendance           integer                   nullable=YES default=None
+audience_demographic_summary   jsonb                     nullable=YES default=None
+generated_at                   timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+
+CONSTRAINTS:
+FOREIGN KEY  event_id -> events.event_id
+PRIMARY KEY  analytics_id
+UNIQUE       event_id
+
+================================================================================
+BOOKINGS
+================================================================================
+
+COLUMNS:
+booking_id                     integer                   nullable=NO  default=nextval('bookings_booking_id_seq'::regclass)
+user_id                        integer                   nullable=NO  default=None
+event_id                       integer                   nullable=NO  default=None
+booking_status                 character varying         nullable=YES default='pending'::character varying
+booked_at                      timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+updated_at                     timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+
+CONSTRAINTS:
+FOREIGN KEY  event_id -> events.event_id
+FOREIGN KEY  user_id -> users.user_id
+PRIMARY KEY  booking_id
+UNIQUE       event_id
+UNIQUE       event_id
+UNIQUE       user_id
+UNIQUE       user_id
+
+================================================================================
+BOOKMARKS
+================================================================================
+
+COLUMNS:
+bookmark_id                    integer                   nullable=NO  default=nextval('bookmarks_bookmark_id_seq'::regclass)
+user_id                        integer                   nullable=NO  default=None
+event_id                       integer                   nullable=NO  default=None
+created_at                     timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+
+CONSTRAINTS:
+FOREIGN KEY  event_id -> events.event_id
+FOREIGN KEY  user_id -> users.user_id
+PRIMARY KEY  bookmark_id
+UNIQUE       event_id
+UNIQUE       event_id
+UNIQUE       user_id
+UNIQUE       user_id
+
+================================================================================
+EVENT_CATEGORIES
+================================================================================
+
+COLUMNS:
+category_id                    integer                   nullable=NO  default=nextval('event_categories_category_id_seq'::regclass)
+category_name                  character varying         nullable=NO  default=None
+description                    text                      nullable=YES default=None
+icon                           character varying         nullable=YES default=None
+created_at                     timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+
+CONSTRAINTS:
+PRIMARY KEY  category_id
+UNIQUE       category_name
+
+================================================================================
+EVENTS
+================================================================================
+
+COLUMNS:
+event_id                       integer                   nullable=NO  default=nextval('events_event_id_seq'::regclass)
+event_name                     character varying         nullable=NO  default=None
+description                    text                      nullable=YES default=None
+category_id                    integer                   nullable=YES default=None
+location                       character varying         nullable=YES default=None
+event_date                     timestamp without time zone nullable=NO  default=None
+end_date                       timestamp without time zone nullable=YES default=None
+capacity                       integer                   nullable=YES default=None
+status                         character varying         nullable=YES default='upcoming'::character varying
+organizer_id                   integer                   nullable=NO  default=None
+created_at                     timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+updated_at                     timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+is_paid                        boolean                   nullable=NO  default=false
+ticket_price                   numeric                   nullable=NO  default=0
+
+CONSTRAINTS:
+FOREIGN KEY  category_id -> event_categories.category_id
+FOREIGN KEY  organizer_id -> users.user_id
+PRIMARY KEY  event_id
+
+================================================================================
+INTERACTIONS
+================================================================================
+
+COLUMNS:
+interaction_id                 integer                   nullable=NO  default=nextval('interactions_interaction_id_seq'::regclass)
+user_id                        integer                   nullable=NO  default=None
+event_id                       integer                   nullable=YES default=None
+interaction_type               character varying         nullable=NO  default=None
+confidence_weight              numeric                   nullable=NO  default=None
+timestamp                      timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+session_id                     character varying         nullable=YES default=None
+
+CONSTRAINTS:
+FOREIGN KEY  event_id -> events.event_id
+FOREIGN KEY  user_id -> users.user_id
+PRIMARY KEY  interaction_id
+
+================================================================================
+MODEL_RUNS
+================================================================================
+
+COLUMNS:
+model_run_id                   integer                   nullable=NO  default=nextval('model_runs_model_run_id_seq'::regclass)
+model_type                     character varying         nullable=YES default=None
+training_data_start            timestamp without time zone nullable=YES default=None
+training_data_end              timestamp without time zone nullable=YES default=None
+num_users                      integer                   nullable=YES default=None
+num_events                     integer                   nullable=YES default=None
+hyperparameters                jsonb                     nullable=YES default=None
+precision                      numeric                   nullable=YES default=None
+recall                         numeric                   nullable=YES default=None
+generated_at                   timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+
+CONSTRAINTS:
+PRIMARY KEY  model_run_id
+
+================================================================================
+PAYMENTS
+================================================================================
+
+COLUMNS:
+payment_id                     integer                   nullable=NO  default=nextval('payments_payment_id_seq'::regclass)
+user_id                        integer                   nullable=NO  default=None
+event_id                       integer                   nullable=NO  default=None
+booking_id                     integer                   nullable=YES default=None
+phone_number                   character varying         nullable=NO  default=None
+amount                         numeric                   nullable=NO  default=None
+merchant_request_id            character varying         nullable=YES default=None
+checkout_request_id            character varying         nullable=YES default=None
+mpesa_receipt_number           character varying         nullable=YES default=None
+transaction_date               character varying         nullable=YES default=None
+result_code                    integer                   nullable=YES default=None
+result_description             text                      nullable=YES default=None
+payment_status                 character varying         nullable=NO  default='pending'::character varying
+created_at                     timestamp without time zone nullable=NO  default=CURRENT_TIMESTAMP
+updated_at                     timestamp without time zone nullable=NO  default=CURRENT_TIMESTAMP
+completed_at                   timestamp without time zone nullable=YES default=None
+
+CONSTRAINTS:
+FOREIGN KEY  booking_id -> bookings.booking_id
+FOREIGN KEY  event_id -> events.event_id
+FOREIGN KEY  user_id -> users.user_id
+PRIMARY KEY  payment_id
+UNIQUE       checkout_request_id
+
+================================================================================
+RECOMMENDATION_OUTPUTS
+================================================================================
+
+COLUMNS:
+recommendation_id              integer                   nullable=NO  default=nextval('recommendation_outputs_recommendation_id_seq'::regclass)
+user_id                        integer                   nullable=NO  default=None
+event_id                       integer                   nullable=NO  default=None
+relevance_score                numeric                   nullable=YES default=None
+model_version                  character varying         nullable=YES default=None
+generated_at                   timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+
+CONSTRAINTS:
+FOREIGN KEY  event_id -> events.event_id
+FOREIGN KEY  user_id -> users.user_id
+PRIMARY KEY  recommendation_id
+
+================================================================================
+TICKETS
+================================================================================
+
+COLUMNS:
+ticket_id                      integer                   nullable=NO  default=nextval('tickets_ticket_id_seq'::regclass)
+booking_id                     integer                   nullable=NO  default=None
+ticket_code                    character varying         nullable=NO  default=None
+ticket_status                  character varying         nullable=YES default='active'::character varying
+issued_at                      timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+checked_in_at                  timestamp without time zone nullable=YES default=None
+
+CONSTRAINTS:
+FOREIGN KEY  booking_id -> bookings.booking_id
+PRIMARY KEY  ticket_id
+UNIQUE       ticket_code
+
+================================================================================
+USER_PREFERENCES
+================================================================================
+
+COLUMNS:
+preference_id                  integer                   nullable=NO  default=nextval('user_preferences_preference_id_seq'::regclass)
+user_id                        integer                   nullable=NO  default=None
+category_id                    integer                   nullable=NO  default=None
+created_at                     timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+
+CONSTRAINTS:
+FOREIGN KEY  category_id -> event_categories.category_id
+FOREIGN KEY  user_id -> users.user_id
+PRIMARY KEY  preference_id
+UNIQUE       category_id
+UNIQUE       category_id
+UNIQUE       user_id
+UNIQUE       user_id
+
+================================================================================
+USERS
+================================================================================
+
+COLUMNS:
+user_id                        integer                   nullable=NO  default=nextval('users_user_id_seq'::regclass)
+full_name                      character varying         nullable=NO  default=None
+email                          character varying         nullable=NO  default=None
+password_hash                  character varying         nullable=NO  default=None
+user_type                      character varying         nullable=NO  default=None
+is_active                      boolean                   nullable=YES default=true
+created_at                     timestamp without time zone nullable=YES default=CURRENT_TIMESTAMP
+last_login                     timestamp without time zone nullable=YES default=None
+phone_number                   character varying         nullable=YES default=None
+institution                    character varying         nullable=YES default=None
+year_of_study                  character varying         nullable=YES default=None
+profile_photo                  character varying         nullable=YES default=None
+
+CONSTRAINTS:
+PRIMARY KEY  user_id
+UNIQUE       email

@@ -66,6 +66,7 @@ function Register({ onSwitch }) {
   return (
     <div className="register-page">
       <div className="register-card">
+
         <div className="register-logo">
           <Logo />
         </div>
@@ -134,11 +135,7 @@ function Register({ onSwitch }) {
 
             <input
               id="password"
-              type={
-                showPassword
-                  ? "text"
-                  : "password"
-              }
+              type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Create a password"
               value={form.password}
@@ -199,9 +196,7 @@ function Register({ onSwitch }) {
                   : "Show password"
               }
             >
-              {showConfirmPassword
-                ? "🙈"
-                : "👁"}
+              {showConfirmPassword ? "🙈" : "👁"}
             </button>
           </div>
 
@@ -210,6 +205,7 @@ function Register({ onSwitch }) {
           </label>
 
           <div className="register-role-options">
+
             <div className="register-role-option">
               <input
                 id="student"
@@ -229,6 +225,7 @@ function Register({ onSwitch }) {
 
                 <span className="role-copy">
                   <strong>Student</strong>
+
                   <small>
                     Join events and communities
                   </small>
@@ -243,8 +240,7 @@ function Register({ onSwitch }) {
                 name="user_type"
                 value="organizer"
                 checked={
-                  form.user_type ===
-                  "organizer"
+                  form.user_type === "organizer"
                 }
                 onChange={handleChange}
               />
@@ -256,12 +252,14 @@ function Register({ onSwitch }) {
 
                 <span className="role-copy">
                   <strong>Organizer</strong>
+
                   <small>
                     Create and manage your events
                   </small>
                 </span>
               </label>
             </div>
+
           </div>
 
           <button
@@ -278,26 +276,7 @@ function Register({ onSwitch }) {
           </div>
         )}
 
-        <div className="register-divider">
-          <span></span>
-          <p>or continue with</p>
-          <span></span>
-        </div>
-
-        <div className="register-social-row">
-          <button
-            type="button"
-            className="register-social-button"
-          >
-            <span className="google-letter">
-              G
-            </span>
-            Continue with Google
-          </button>
-
        
-        </div>
-
         <p className="register-login-text">
           Already have an account?{" "}
 
@@ -309,6 +288,7 @@ function Register({ onSwitch }) {
             Log in
           </button>
         </p>
+
       </div>
     </div>
   );
